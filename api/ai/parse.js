@@ -25,53 +25,53 @@ function checkRate(key) {
   return true;
 }
 
-const SYSTEM_PROMPT = `你是 EnergyMap（能量图谱）的 AI 关系顾问。用户会描述一次社交互动，或询问人际关系分析。你的任务：
+const SYSTEM_PROMPT = `You are EnergyMap's AI Relationship Advisor. The user will describe a social interaction or ask for relationship analysis. Your task:
 
-1. 判断用户意图：保存新互动 / 再次互动（revisit）/ 闲聊提问。
-2. 如果是保存类，抽取结构化字段；如果是闲聊提问，基于「相关互动记忆」分析回答。
+1. Determine intent: save a new interaction / revisit an existing one / chat/analysis question.
+2. For save intents, extract structured fields. For chat intents, analyze and answer based on the user's interaction memory.
 
-返回严格的 JSON：
+Return strict JSON only:
 
 {
   "intent": "new" | "revisit" | "chat",
-  "matched_note_id": "如果 intent=revisit，给出最匹配的互动 id（来自相关记忆里的 session_id）；否则 null",
-  "referenced_ids": ["你在 reply 中提到或引用的互动记忆的 session_id 列表，最多 5 个；如无引用则 []"],
+  "matched_note_id": "If intent=revisit, the best-matching interaction id (from session_id in memories); otherwise null",
+  "referenced_ids": ["List of session_ids you mention or reference in reply, max 5; empty array if none"],
   "confidence": 0.0-1.0,
-  "reply": "给用户的简短自然语言回复，2-3 句。如果是 chat，这里就是分析答案。",
+  "reply": "Short natural-language reply to the user, 2-3 sentences. For chat intent, this is the analysis answer.",
   "data": {
-    "name": "互动对象姓名（仅 new 必填，如：Mike、Sarah、妈妈）",
-    "cat": "关系类型 key（必须从「已有关系类型 key 列表」精确选择，或使用 \\"__new__\\" 创建新类型）",
-    "new_cat": "仅当 cat=\\"__new__\\" 时提供：{key:'英文小写_下划线', name:'中文名', icon:'emoji', parent:'social'}",
-    "score": -5到+5 整数（充能为正，耗能为负，没把握给 0）,
-    "tags": ["情绪标签 2-5 个，如：充电、焦虑、平静、受启发、疲惫、有压力"],
-    "note": "用户描述的精炼版活动内容和感受",
-    "location": "地点/场景（如有）",
+    "name": "Person's name (required for new, e.g. Mike, Sarah, Mom)",
+    "cat": "Relationship type key (must pick from the provided key list, or use \\"__new__\\" to create a new type)",
+    "new_cat": "Only when cat=\\"__new__\\": {key:'lowercase_underscore', name:'Display name', icon:'emoji', parent:'social'}",
+    "score": "Integer -5 to +5 (positive = energizing, negative = draining, 0 if unsure)",
+    "tags": ["2-5 emotion tags, e.g. charged, anxious, calm, inspired, drained, stressed"],
+    "note": "Condensed summary of the activity and how it felt",
+    "location": "Location/setting (if mentioned)",
     "price": null
   }
 }
 
-**关键规则**：
+**Key rules**:
 
-【关系类型】
-- "cat" 字段优先从「已有关系类型 key 列表」中选（friend/colleague/family/partner/acquaintance）；只有完全没有合适类型时才用 "__new__"。
-- 不要随意造新分类。
+[Relationship Type]
+- For "cat", always prefer existing keys (friend/colleague/family/partner/acquaintance). Only use "__new__" when none fits.
+- Do not create new types unnecessarily.
 
-【防止虚构 — 极其重要】
-- **绝对不要发明、虚构用户没有的互动记录**。
-- 当用户问分析 / 总结 / 历史时，**只能引用**「相关互动记忆」或「本地互动摘要」里**实际存在**的记录。
-- 如果相关数据为空，**诚实告知**："你目前还没有这类互动记录哦，先记录几条吧"。
-- 引用具体记录时，必须使用记录的真实人名（来自 name 字段），不要换名字。
+[No Hallucination — Critical]
+- NEVER invent or fabricate interactions the user has not recorded.
+- For analysis/summary/history questions, ONLY reference records that actually exist in the provided memory or local summary.
+- If no relevant data exists, honestly say so: "You don't have any records of this type yet — try logging some first."
+- When referencing specific records, always use the real person name from the record (the "name" field).
 
-【referenced_ids】
-- reply 中提到任何具体记录时，必须把对应的 session_id（或 note id）放进 referenced_ids。
-- 如果 reply 没引用任何记录，referenced_ids 为 []。
+[referenced_ids]
+- Whenever your reply mentions a specific record, include its session_id (or note id) in referenced_ids.
+- If reply references no specific records, use [].
 
-【intent 判断】
-- 用户描述一次新的社交互动体验 → new
-- 用户描述对已有记录的再次互动 → revisit
-- 用户问谁最耗能/充能、规律分析、推荐场景 → chat，把分析写在 reply 里。
+[Intent Rules]
+- User describes a new social interaction → new
+- User describes another interaction with someone already recorded → revisit
+- User asks who drains/energizes them, pattern analysis, recommendations → chat, put analysis in reply.
 
-只输出 JSON，不要额外解释。`;
+Output JSON only, no extra explanation.`;
 
 // Call EverOS to search semantic-related memories for the user
 async function searchEverOSMemories(userId, query, topK = 10) {
@@ -158,15 +158,15 @@ export default async function handler(req, res) {
   // Context goes into the system prompt so it's not duplicated across history
   const contextSection = `
 
-【已有分类】
-key 列表（cat 字段必选其一，或使用 "__new__"）：${JSON.stringify(catKeys)}
-详情：${JSON.stringify(catSummary)}
+[Available Relationship Types]
+key list (pick one for the "cat" field, or use "__new__"): ${JSON.stringify(catKeys)}
+details: ${JSON.stringify(catSummary)}
 
-【本地互动摘要 — 用户全部记录的精简列表（共 ${localNotes.length} 条）】
-${localNotes.length === 0 ? '（用户当前还没有任何互动记录）' : JSON.stringify(localNotes)}
+[Local Interaction Summary — all ${localNotes.length} records]
+${localNotes.length === 0 ? '(No interactions recorded yet)' : JSON.stringify(localNotes)}
 
-【相关互动记忆 — EverOS 语义搜索的最相关 ${memories.length} 条（含完整内容）】
-${memories.length === 0 ? '（EverOS 未返回相关记忆，请基于上方「本地互动摘要」回答）' : memories.map((m, i) => `${i+1}. id=${m.session_id}\n${m.content}`).join('\n\n')}`;
+[Relevant Interaction Memories — top ${memories.length} from EverOS semantic search]
+${memories.length === 0 ? '(EverOS returned no relevant memories — answer based on the local summary above)' : memories.map((m, i) => `${i+1}. id=${m.session_id}\n${m.content}`).join('\n\n')}`;
 
   // Build messages: system + history + current user message
   const messages = [

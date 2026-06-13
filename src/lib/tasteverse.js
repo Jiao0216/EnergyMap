@@ -310,10 +310,10 @@ function logout(){
   document.getElementById('login-email').value='';
   document.getElementById('login-code').value='';
   document.getElementById('verify-group').style.display='none';
-  document.getElementById('login-btn').textContent='发送验证码';
+  document.getElementById('login-btn').textContent='Send Code';
   document.getElementById('login-msg').textContent='';
   document.getElementById('login-msg').className='login-msg';
-  document.getElementById('login-title').textContent='登录 / 注册';
+  document.getElementById('login-title').textContent='Sign In / Sign Up';
 }
 
 // Login flow
@@ -333,17 +333,17 @@ function logout(){
     resendLink.style.cursor='default';
     resendLink.style.color='var(--text3)';
     resendLink.style.textDecoration='none';
-    resendLink.textContent=remaining+' 秒后可重发';
+    resendLink.textContent='Resend in '+remaining+'s';
     resendTimer=setInterval(function(){
       remaining--;
       if(remaining<=0){
         clearInterval(resendTimer);resendTimer=null;
-        resendLink.textContent='重新发送';
+        resendLink.textContent='Resend';
         resendLink.style.cursor='pointer';
         resendLink.style.color='var(--accent)';
         resendLink.style.textDecoration='underline';
       }else{
-        resendLink.textContent=remaining+' 秒后可重发';
+        resendLink.textContent='Resend in '+remaining+'s';
       }
     },1000);
   }
@@ -356,7 +356,7 @@ function logout(){
     }).then(function(r){return r.json().then(function(d){return {ok:r.ok,status:r.status,data:d};});})
     .then(function(result){
       if(!result.ok){
-        var e=new Error(result.data.error||'发送失败');
+        var e=new Error(result.data.error||'Send failed');
         e.status=result.status;e.retryAfter=result.data.retryAfter;
         throw e;
       }
@@ -369,17 +369,17 @@ function logout(){
   resendLink.onclick=function(){
     if(resendTimer)return; // still cooling down
     if(!_verifyEmail)return;
-    msg.textContent='正在重新发送...';msg.className='login-msg';
+    msg.textContent='Resending...';msg.className='login-msg';
     sendCode(_verifyEmail,function(cooldown){
-      msg.textContent='验证码已重新发送，请查收';msg.className='login-msg success';
+      msg.textContent='Code resent — check your inbox';msg.className='login-msg success';
       startResendCountdown(cooldown);
     },function(err){
       console.error('[TasteVerse] resend error:',err);
       if(err.status===429&&err.retryAfter){
         startResendCountdown(err.retryAfter);
-        msg.textContent='请等待 '+err.retryAfter+' 秒后重试';msg.className='login-msg error';
+        msg.textContent='Please wait '+err.retryAfter+'s before retrying';msg.className='login-msg error';
       }else{
-        msg.textContent='重发失败: '+(err.message||'请检查网络');msg.className='login-msg error';
+        msg.textContent='Resend failed: '+(err.message||'Check your network');msg.className='login-msg error';
       }
     });
   };
@@ -388,20 +388,20 @@ function logout(){
     if(step==='email'){
       var email=emailInput.value.trim();
       if(!email||email.indexOf('@')<1||email.indexOf('.')<3){
-        msg.textContent='请输入有效的邮箱地址';msg.className='login-msg error';return;
+        msg.textContent='Please enter a valid email address';msg.className='login-msg error';return;
       }
       _verifyEmail=email;
       btn.disabled=true;
-      btn.textContent='发送中...';
-      msg.textContent='正在发送验证码...';msg.className='login-msg';
+      btn.textContent='Sending...';
+      msg.textContent='Sending code...';msg.className='login-msg';
 
       sendCode(email,function(cooldown){
         step='verify';
         verifyGroup.style.display='block';
         btn.disabled=false;
-        btn.textContent='验证并登录';
-        document.getElementById('login-title').textContent='输入验证码';
-        msg.textContent='验证码已发送到 '+email+'，请查收邮箱（含垃圾箱）';
+        btn.textContent='Verify & Sign In';
+        document.getElementById('login-title').textContent='Enter Code';
+        msg.textContent='Code sent to '+email+' — check your inbox (including spam)';
         msg.className='login-msg success';
         emailInput.disabled=true;
         startResendCountdown(cooldown);
@@ -409,18 +409,18 @@ function logout(){
       },function(err){
         console.error('[TasteVerse] send-code error:',err);
         if(err.status===429&&err.retryAfter){
-          msg.textContent='发送过于频繁，请 '+err.retryAfter+' 秒后重试';
+          msg.textContent='Too many requests, please wait '+err.retryAfter+'s';
         }else{
-          msg.textContent='发送失败: '+(err.message||'请检查网络');
+          msg.textContent='Send failed: '+(err.message||'Check your network');
         }
         msg.className='login-msg error';
-        btn.disabled=false;btn.textContent='重新发送';
+        btn.disabled=false;btn.textContent='Resend';
       });
     }else{
       var code=codeInput.value.trim();
-      if(!code){msg.textContent='请输入验证码';msg.className='login-msg error';return;}
+      if(!code){msg.textContent='Please enter the verification code';msg.className='login-msg error';return;}
       btn.disabled=true;
-      btn.textContent='验证中...';
+      btn.textContent='Verifying...';
 
       // Call backend to verify code against HMAC
       fetch('/api/auth/verify-code',{
@@ -430,12 +430,12 @@ function logout(){
       }).then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
       .then(function(result){
         if(!result.ok){
-          throw new Error(result.data.error||'验证失败');
+          throw new Error(result.data.error||'Verification failed');
         }
         // Login success
         currentUser={email:_verifyEmail};
         try{localStorage.setItem('tv_session',JSON.stringify(currentUser));localStorage.setItem('em_session',JSON.stringify(currentUser));}catch(e){}
-        msg.textContent='登录成功！';msg.className='login-msg success';
+        msg.textContent='Signed in!';msg.className='login-msg success';
         setTimeout(function(){
           hideLoginScreen();
           btn.disabled=false;
@@ -446,11 +446,11 @@ function logout(){
         },500);
       }).catch(function(err){
         console.error('[TasteVerse] verify-code error:',err);
-        var errMsg=err.message==='Code expired'?'验证码已过期，请重新发送':
-                   err.message==='Invalid code'?'验证码错误，请重试':
-                   '验证失败: '+(err.message||'请检查网络');
+        var errMsg=err.message==='Code expired'?'Code expired — please resend':
+                   err.message==='Invalid code'?'Incorrect code — please try again':
+                   'Verification failed: '+(err.message||'Check your network');
         msg.textContent=errMsg;msg.className='login-msg error';
-        btn.disabled=false;btn.textContent='验证并登录';
+        btn.disabled=false;btn.textContent='Verify & Sign In';
       });
     }
   };
@@ -496,32 +496,32 @@ function showProfile(){
   var avgScore=totalNotes?(notes.reduce(function(s,n){return s+n.score;},0)/totalNotes).toFixed(1):'—';
 
   var avatarHtml=p.avatarData
-    ?'<img src="'+p.avatarData+'"><div class="avatar-overlay">更换</div>'
-    :'<span>'+((p.nickname||email).charAt(0)).toUpperCase()+'</span><div class="avatar-overlay">上传</div>';
+    ?'<img src="'+p.avatarData+'"><div class="avatar-overlay">Change</div>'
+    :'<span>'+((p.nickname||email).charAt(0)).toUpperCase()+'</span><div class="avatar-overlay">Upload</div>';
 
   document.getElementById('profile-content').innerHTML=
-    '<h3>个人资料</h3>'
+    '<h3>Profile</h3>'
     +'<div class="profile-avatar-wrap">'
       +'<div class="profile-avatar-lg" id="profile-avatar-lg">'+avatarHtml+'</div>'
       +'<input type="file" id="profile-avatar-input" accept="image/*" style="display:none">'
-      +'<div class="profile-avatar-hint">点击更换头像</div>'
+      +'<div class="profile-avatar-hint">Click to change avatar</div>'
     +'</div>'
-    +'<div class="profile-field"><label>昵称</label><input type="text" id="pf-nickname" placeholder="给自己起个名字" value="'+(p.nickname||'').replace(/"/g,'&quot;')+'"></div>'
-    +'<div class="profile-field"><label>邮箱</label><div class="pf-static">'+email+'</div></div>'
-    +'<div class="profile-field"><label>生日</label><input type="date" id="pf-birthday" value="'+(p.birthday||'')+'"></div>'
-    +'<div class="profile-field"><label>个性签名</label><input type="text" id="pf-bio" placeholder="用一句话描述你的味觉偏好" value="'+(p.bio||'').replace(/"/g,'&quot;')+'"></div>'
+    +'<div class="profile-field"><label>Nickname</label><input type="text" id="pf-nickname" placeholder="Give yourself a name" value="'+(p.nickname||'').replace(/"/g,'&quot;')+'"></div>'
+    +'<div class="profile-field"><label>Email</label><div class="pf-static">'+email+'</div></div>'
+    +'<div class="profile-field"><label>Birthday</label><input type="date" id="pf-birthday" value="'+(p.birthday||'')+'"></div>'
+    +'<div class="profile-field"><label>Bio</label><input type="text" id="pf-bio" placeholder="Describe yourself in one sentence" value="'+(p.bio||'').replace(/"/g,'&quot;')+'"></div>'
     +'<div class="profile-stats">'
-      +'<div class="profile-stat"><div class="ps-num">'+totalNotes+'</div><div class="ps-label">互动</div></div>'
-      +'<div class="profile-stat"><div class="ps-num">'+totalVisits+'</div><div class="ps-label">总次数</div></div>'
-      +'<div class="profile-stat"><div class="ps-num">'+(parseFloat(avgScore)>0?'+':'')+avgScore+'</div><div class="ps-label">平均能量</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+totalNotes+'</div><div class="ps-label">Interactions</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+totalVisits+'</div><div class="ps-label">Total</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+(parseFloat(avgScore)>0?'+':'')+avgScore+'</div><div class="ps-label">Avg Energy</div></div>'
     +'</div>'
     +'<div class="profile-stats" style="grid-template-columns:1fr 1fr;margin-top:0">'
-      +'<div class="profile-stat"><div class="ps-num">'+catCount+'</div><div class="ps-label">品类</div></div>'
-      +'<div class="profile-stat"><div class="ps-num">'+(p.joinDate||new Date().toISOString().split('T')[0])+'</div><div class="ps-label">加入日期</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+catCount+'</div><div class="ps-label">Types</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+(p.joinDate||new Date().toISOString().split('T')[0])+'</div><div class="ps-label">Joined</div></div>'
     +'</div>'
     +'<div class="profile-actions">'
-      +'<button class="btn-save-profile" id="pf-save">保存资料</button>'
-      +'<button class="btn-logout" id="pf-logout">退出登录</button>'
+      +'<button class="btn-save-profile" id="pf-save">Save Profile</button>'
+      +'<button class="btn-logout" id="pf-logout">Sign Out</button>'
     +'</div>';
 
   // Wire avatar upload
@@ -569,11 +569,11 @@ function showProfile(){
   // Wire logout
   document.getElementById('pf-logout').onclick=function(){
     document.getElementById('profile-panel').classList.remove('open');
-    showModal('<h3>退出登录</h3>'
-      +'<p style="color:var(--text2);font-size:13px">确定要退出 <b style="color:var(--text)">'+email+'</b> 吗？你的品鉴数据会保留在本地。</p>'
+    showModal('<h3>Sign Out</h3>'
+      +'<p style="color:var(--text2);font-size:13px">Sign out of <b style="color:var(--text)">'+email+'</b>? Your data will remain saved locally.</p>'
       +'<div class="modal-actions">'
-      +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">取消</button>'
-      +'<button class="btn-danger" id="confirm-logout">退出</button></div>');
+      +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">Cancel</button>'
+      +'<button class="btn-danger" id="confirm-logout">Sign Out</button></div>');
     document.getElementById('confirm-logout').onclick=function(){closeModal();logout();};
   };
 
@@ -599,14 +599,14 @@ var USER_ID='flavortrace_user_001';
 
 // ── DEFAULT DATA (5 core categories for new users) ──
 var DEFAULT_TAXONOMY={
-  social:{name:'关系类型',children:['friend','colleague','family','partner','acquaintance']}
+  social:{name:'Relationship Types',children:['friend','colleague','family','partner','acquaintance']}
 };
 var DEFAULT_CATEGORIES={
-  friend:{name:'朋友',icon:'👫',color:'#F0A040',parent:'social'},
-  colleague:{name:'同事',icon:'💼',color:'#5090E0',parent:'social'},
-  family:{name:'家人',icon:'👨‍👩‍👧',color:'#A060D0',parent:'social'},
-  partner:{name:'恋人',icon:'💕',color:'#E05080',parent:'social'},
-  acquaintance:{name:'泛泛之交',icon:'🤝',color:'#50B090',parent:'social'}
+  friend:{name:'Friend',icon:'👫',color:'#F0A040',parent:'social'},
+  colleague:{name:'Colleague',icon:'💼',color:'#5090E0',parent:'social'},
+  family:{name:'Family',icon:'👨‍👩‍👧',color:'#A060D0',parent:'social'},
+  partner:{name:'Partner',icon:'💕',color:'#E05080',parent:'social'},
+  acquaintance:{name:'Acquaintance',icon:'🤝',color:'#50B090',parent:'social'}
 };
 
 var TAXONOMY,CATEGORIES;
@@ -622,6 +622,191 @@ function saveUserData(){
     localStorage.setItem(storageKey(currentUser.email,'taxonomy'),JSON.stringify(TAXONOMY));
     localStorage.setItem(storageKey(currentUser.email,'categories'),JSON.stringify(CATEGORIES));
   }catch(e){console.warn('[TasteVerse] Save failed:',e);}
+}
+
+// Migrate legacy Chinese relationship labels saved in localStorage → English defaults
+function migrateCategoriesToEnglish(){
+  var CN_CAT_NAMES={'朋友':'friend','同事':'colleague','家人':'family','恋人':'partner','泛泛之交':'acquaintance'};
+  var CN_TAX_NAMES={'关系类型':'social','社交':'social'};
+  var changed=false;
+  Object.keys(CN_CAT_NAMES).forEach(function(cn){
+    var key=CN_CAT_NAMES[cn];
+    if(CATEGORIES[key]&&CATEGORIES[key].name===cn){
+      CATEGORIES[key].name=DEFAULT_CATEGORIES[key].name;
+      if(DEFAULT_CATEGORIES[key].icon)CATEGORIES[key].icon=DEFAULT_CATEGORIES[key].icon;
+      changed=true;
+    }
+  });
+  Object.keys(CN_TAX_NAMES).forEach(function(cn){
+    var gk=CN_TAX_NAMES[cn];
+    if(TAXONOMY[gk]&&TAXONOMY[gk].name===cn){
+      TAXONOMY[gk].name=DEFAULT_TAXONOMY[gk].name;
+      changed=true;
+    }
+  });
+  if(changed)saveUserData();
+}
+
+// Migrate legacy Chinese interaction records (names, tags, notes) → English
+function migrateNotesToEnglish(){
+  var CN_TAGS={
+    '充电':'Recharged','愉快':'Happy','放松':'Relaxed','焦虑':'Anxious','疲惫':'Drained',
+    '压力':'Stressed','温暖':'Warm','尴尬':'Awkward','无聊':'Bored','启发':'Inspired',
+    '感动':'Touched','烦躁':'Irritated','充实':'Fulfilled','低落':'Low','兴奋':'Excited',
+    '平静':'Calm','紧张':'Nervous','快乐':'Joyful','治愈':'Healing','消耗':'Depleting',
+    '正能量':'Positive','负能量':'Negative','开心':'Happy','累':'Tired','舒服':'Comfortable'
+  };
+  var CN_NAMES={
+    '同学':'Classmates','同事们':'Colleagues','同事':'Colleague','家人':'Family',
+    '朋友':'Friends','老板':'Boss','妈妈':'Mom','爸爸':'Dad','恋人':'Partner','室友':'Roommate'
+  };
+  var CN_NOTE_PHRASES=[
+    ['和同学去爬山','Went hiking with classmates'],
+    ['和同事吃饭','Had dinner with colleagues'],
+    ['和家人团聚','Reunited with family'],
+    ['和朋友聚会','Hung out with friends'],
+    ['去爬山','Went hiking'],
+    ['一起吃饭','Had a meal together'],
+    ['聊天','Had a conversation'],
+    ['开会','Had a meeting']
+  ];
+  function translateTags(tags){
+    if(!Array.isArray(tags))return tags;
+    return tags.map(function(t){return CN_TAGS[t]||t;});
+  }
+  function translateNoteText(text){
+    if(!text||typeof text!=='string')return text;
+    var out=text;
+    CN_NOTE_PHRASES.forEach(function(pair){out=out.split(pair[0]).join(pair[1]);});
+    return out;
+  }
+  function migrateOne(rec){
+    var changed=false;
+    if(rec.name&&CN_NAMES[rec.name]){rec.name=CN_NAMES[rec.name];changed=true;}
+    if(Array.isArray(rec.tags)){
+      var newTags=translateTags(rec.tags);
+      if(JSON.stringify(newTags)!==JSON.stringify(rec.tags)){rec.tags=newTags;changed=true;}
+    }
+    if(rec.note){
+      var newNote=translateNoteText(rec.note);
+      if(newNote!==rec.note){rec.note=newNote;changed=true;}
+    }
+    return changed;
+  }
+  var changed=false;
+  notes.forEach(function(n){
+    if(migrateOne(n))changed=true;
+    (n.visits||[]).forEach(function(v){if(migrateOne(v))changed=true;});
+  });
+  if(changed)saveUserData();
+}
+
+// Migrate legacy Chinese interaction records (names, tags, notes) → English
+function migrateNotesToEnglish(){
+  var CN_TAGS={
+    '充电':'Recharged','愉快':'Happy','放松':'Relaxed','焦虑':'Anxious','疲惫':'Drained',
+    '压力':'Stressed','温暖':'Warm','尴尬':'Awkward','无聊':'Bored','启发':'Inspired',
+    '感动':'Touched','烦躁':'Irritated','充实':'Fulfilled','低落':'Low','兴奋':'Excited',
+    '平静':'Calm','紧张':'Nervous','快乐':'Joyful','治愈':'Healing','消耗':'Depleting',
+    '正能量':'Positive','负能量':'Negative','开心':'Happy','累':'Tired','舒服':'Comfortable'
+  };
+  var CN_NAMES={
+    '同学':'Classmates','同事们':'Colleagues','同事':'Colleague','家人':'Family',
+    '朋友':'Friends','老板':'Boss','妈妈':'Mom','爸爸':'Dad','恋人':'Partner','室友':'Roommate'
+  };
+  var CN_NOTE_PHRASES=[
+    ['和同学去爬山','Went hiking with classmates'],
+    ['和同事吃饭','Had dinner with colleagues'],
+    ['和家人团聚','Reunited with family'],
+    ['和朋友聚会','Hung out with friends'],
+    ['去爬山','Went hiking'],
+    ['一起吃饭','Had a meal together'],
+    ['聊天','Had a conversation'],
+    ['开会','Had a meeting']
+  ];
+  function translateTags(tags){
+    if(!Array.isArray(tags))return tags;
+    return tags.map(function(t){return CN_TAGS[t]||t;});
+  }
+  function translateNoteText(text){
+    if(!text||typeof text!=='string')return text;
+    var out=text;
+    CN_NOTE_PHRASES.forEach(function(pair){out=out.split(pair[0]).join(pair[1]);});
+    return out;
+  }
+  function migrateOne(rec){
+    var changed=false;
+    if(rec.name&&CN_NAMES[rec.name]){rec.name=CN_NAMES[rec.name];changed=true;}
+    if(Array.isArray(rec.tags)){
+      var newTags=translateTags(rec.tags);
+      if(JSON.stringify(newTags)!==JSON.stringify(rec.tags)){rec.tags=newTags;changed=true;}
+    }
+    if(rec.note){
+      var newNote=translateNoteText(rec.note);
+      if(newNote!==rec.note){rec.note=newNote;changed=true;}
+    }
+    return changed;
+  }
+  var changed=false;
+  notes.forEach(function(n){
+    if(migrateOne(n))changed=true;
+    (n.visits||[]).forEach(function(v){if(migrateOne(v))changed=true;});
+  });
+  if(changed)saveUserData();
+}
+
+// Migrate legacy Chinese interaction records (names, tags, notes) → English
+function migrateNotesToEnglish(){
+  var CN_TAGS={
+    '充电':'Recharged','愉快':'Happy','放松':'Relaxed','焦虑':'Anxious','疲惫':'Drained',
+    '压力':'Stressed','温暖':'Warm','尴尬':'Awkward','无聊':'Bored','启发':'Inspired',
+    '感动':'Touched','烦躁':'Irritated','充实':'Fulfilled','低落':'Low','兴奋':'Excited',
+    '平静':'Calm','紧张':'Nervous','快乐':'Joyful','治愈':'Healing','消耗':'Depleting',
+    '正能量':'Positive','负能量':'Negative','开心':'Happy','累':'Tired','舒服':'Comfortable'
+  };
+  var CN_NAMES={
+    '同学':'Classmates','同事们':'Colleagues','同事':'Colleague','家人':'Family',
+    '朋友':'Friends','老板':'Boss','妈妈':'Mom','爸爸':'Dad','恋人':'Partner','室友':'Roommate'
+  };
+  var CN_NOTE_PHRASES=[
+    ['和同学去爬山','Went hiking with classmates'],
+    ['和同事吃饭','Had dinner with colleagues'],
+    ['和家人团聚','Reunited with family'],
+    ['和朋友聚会','Hung out with friends'],
+    ['去爬山','Went hiking'],
+    ['一起吃饭','Had a meal together'],
+    ['聊天','Had a conversation'],
+    ['开会','Had a meeting']
+  ];
+  function translateTags(tags){
+    if(!Array.isArray(tags))return tags;
+    return tags.map(function(t){return CN_TAGS[t]||t;});
+  }
+  function translateNoteText(text){
+    if(!text||typeof text!=='string')return text;
+    var out=text;
+    CN_NOTE_PHRASES.forEach(function(pair){out=out.split(pair[0]).join(pair[1]);});
+    return out;
+  }
+  function migrateOne(rec){
+    var changed=false;
+    if(rec.name&&CN_NAMES[rec.name]){rec.name=CN_NAMES[rec.name];changed=true;}
+    if(Array.isArray(rec.tags)){
+      var newTags=translateTags(rec.tags);
+      if(JSON.stringify(newTags)!==JSON.stringify(rec.tags)){rec.tags=newTags;changed=true;}
+    }
+    if(rec.note){
+      var newNote=translateNoteText(rec.note);
+      if(newNote!==rec.note){rec.note=newNote;changed=true;}
+    }
+    return changed;
+  }
+  var changed=false;
+  notes.forEach(function(n){
+    if(migrateOne(n))changed=true;
+    (n.visits||[]).forEach(function(v){if(migrateOne(v))changed=true;});
+  });
+  if(changed)saveUserData();
 }
 
 function loadUserData(){
@@ -647,6 +832,9 @@ function loadUserData(){
         CATEGORIES=deepClone(DEFAULT_CATEGORIES);
         notes=[];
         saveUserData();
+      }else{
+        migrateCategoriesToEnglish();
+        migrateNotesToEnglish();
       }
       console.log('[EnergyMap] Loaded '+notes.length+' interactions for '+email);
     }else{
@@ -721,7 +909,8 @@ function calInit(){
   calRender();
 }
 function calRender(){
-  var label=_calYear+'年'+(_calMonth+1)+'月';
+  var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var label=MONTH_NAMES[_calMonth]+' '+_calYear;
   document.getElementById('cal-month-label').textContent=label;
   var grid=document.getElementById('cal-grid');grid.innerHTML='';
   var first=new Date(_calYear,_calMonth,1);
@@ -783,8 +972,9 @@ function calRender(){
   if(!_calSelectedDay){document.getElementById('cal-day-detail').innerHTML='';document.getElementById('cal-mini-graph').style.display='none';}
 }
 function calShowDay(day,dayNotes){
-  var dateStr=_calYear+'年'+(_calMonth+1)+'月'+day+'日';
-  var html='<div class="cal-day-detail"><div class="cal-day-title"><span class="cdt-date">'+dateStr+'</span><span style="font-size:11px;color:var(--text3)">'+dayNotes.length+'条记录</span></div>';
+  var MONTH_NAMES_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dateStr=MONTH_NAMES_SHORT[_calMonth]+' '+day+', '+_calYear;
+  var html='<div class="cal-day-detail"><div class="cal-day-title"><span class="cdt-date">'+dateStr+'</span><span style="font-size:11px;color:var(--text3)">'+dayNotes.length+' record'+(dayNotes.length===1?'':'s')+'</span></div>';
   dayNotes.forEach(function(n){
     var cat=CATEGORIES[n.cat]||{icon:'📝',name:n.cat,color:'#888'};
     html+='<div class="cal-note-item" data-note-id="'+n.id+'">'
@@ -922,7 +1112,7 @@ function calBuildMiniGraph(dayNotes){
       return '<div style="background:rgba(5,5,15,0.95);padding:10px 14px;border-radius:8px;border:1px solid '+n.color+'30;max-width:220px;font-family:Inter,sans-serif">'
         +'<div style="font-size:9px;color:'+n.color+';font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">'+escapeHtml(n.catIcon||'')+' '+escapeHtml(n.catName||'')+'</div>'
         +'<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:3px">'+escapeHtml(n.name)+'</div>'
-        +'<div style="font-size:20px;font-weight:800;color:'+n.color+'">'+(n.score>0?'+':'')+n.score+'<span style="font-size:10px;opacity:0.4"> 能量</span></div></div>';
+          +'<div style="font-size:20px;font-weight:800;color:'+n.color+'">'+(n.score>0?'+':'')+n.score+'<span style="font-size:10px;opacity:0.4"> energy</span></div></div>';
     })
     .nodeThreeObject(function(n){
       var grp=new T.Group();
@@ -1223,7 +1413,7 @@ function populateCatSelects(){
     g.children.forEach(function(ck){var c=CATEGORIES[ck];if(!c)return;var o=document.createElement('option');o.value=ck;o.textContent=c.icon+' '+c.name;og.appendChild(o);});
     if(og.children.length)sel.appendChild(og);
   });
-  var co=document.createElement('option');co.value='__custom__';co.textContent='+ 自定义关系类型';sel.appendChild(co);
+  var co=document.createElement('option');co.value='__custom__';co.textContent='+ Custom type';sel.appendChild(co);
   sel.onchange=function(){
     var isC=sel.value==='__custom__';
     document.getElementById('custom-cat-group').style.display=isC?'block':'none';
@@ -1257,7 +1447,7 @@ function calcAvgPrice(){
   var result=document.getElementById('price-avg-result');
   if(total>0&&people>0){
     var avg=(total/people).toFixed(2);
-    result.textContent='≈ 人均 ¥'+avg;
+    result.textContent='≈ avg ¥'+avg;
   }else{
     result.textContent='';
   }
@@ -1303,20 +1493,20 @@ recPhoto.onchange=function(){
 // ── LOCATE ─────────────────────────────────────
 document.getElementById('btn-locate').onclick=function(){
   var locInput=document.getElementById('rec-location');
-  if(!navigator.geolocation){locInput.placeholder='浏览器不支持定位';return;}
-  locInput.value='定位中...';
+  if(!navigator.geolocation){locInput.placeholder='Geolocation not supported';return;}
+  locInput.value='Locating...';
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat=pos.coords.latitude.toFixed(5),lng=pos.coords.longitude.toFixed(5);
     locInput.value='📍 '+lat+', '+lng;
   },function(err){
-    locInput.value='';locInput.placeholder='定位失败: '+err.message;
+    locInput.value='';locInput.placeholder='Location failed: '+err.message;
   },{enableHighAccuracy:true,timeout:8000});
 };
 
 document.getElementById('btn-save').onclick=function(){
   var cat=document.getElementById('rec-cat').value;
-  if(cat==='__custom__'){var cn=document.getElementById('rec-custom-cat').value.trim();if(!cn){alert('请输入关系类型名称');return;}var ci=document.getElementById('rec-custom-icon').value.trim()||'👥';var pc=document.getElementById('rec-parent-cat').value||'social';if(!TAXONOMY[pc])pc='social';cat='custom_'+Date.now();CATEGORIES[cat]={name:cn,icon:ci,color:'#'+Math.floor(Math.random()*0x999999+0x333333).toString(16),parent:pc};TAXONOMY[pc].children.push(cat);populateCatSelects();}
-  var name=document.getElementById('rec-name').value.trim();if(!name){alert('请输入人名');return;}
+  if(cat==='__custom__'){var cn=document.getElementById('rec-custom-cat').value.trim();if(!cn){alert('Please enter a relationship type name');return;}var ci=document.getElementById('rec-custom-icon').value.trim()||'👥';var pc=document.getElementById('rec-parent-cat').value||'social';if(!TAXONOMY[pc])pc='social';cat='custom_'+Date.now();CATEGORIES[cat]={name:cn,icon:ci,color:'#'+Math.floor(Math.random()*0x999999+0x333333).toString(16),parent:pc};TAXONOMY[pc].children.push(cat);populateCatSelects();}
+  var name=document.getElementById('rec-name').value.trim();if(!name){alert('Please enter a name');return;}
   var loc=document.getElementById('rec-location').value.trim();
   var durEl=document.getElementById('rec-duration');var duration=durEl?parseInt(durEl.value)||0:0;
   var noteObj={id:'n'+Date.now(),cat:cat,name:name,score:selectedScore,tags:userTags.slice(),note:document.getElementById('rec-notes').value.trim(),time:new Date().toISOString().split('T')[0],location:loc||'',duration_min:duration||null,photo:uploadedPhotoData||''};
@@ -1371,8 +1561,8 @@ document.getElementById('btn-save').onclick=function(){
         var pct=Math.round(m.score*100);
         return '<div class="dup-hint-item">'
           +'<div><div class="dup-hint-name">'+c.icon+' '+escapeHtml(m.note.name)+'</div>'
-          +'<div class="dup-hint-meta">'+m.note.score+'/10 · '+m.note.time+' · 匹配 '+pct+'%</div></div>'
-          +'<button class="dup-hint-btn" data-merge-id="'+m.note.id+'">合并为再次品鉴</button>'
+          +'<div class="dup-hint-meta">'+m.note.score+' energy · '+m.note.time+' · '+pct+'% match</div></div>'
+          +'<button class="dup-hint-btn" data-merge-id="'+m.note.id+'">Merge as follow-up</button>'
           +'</div>';
       }).join('');
       dupHint.classList.add('show');
@@ -1401,7 +1591,7 @@ document.getElementById('btn-save').onclick=function(){
 })();
 
 // ══════════════════════════════════════════════════
-//  EverOS MEMORY SERVICE — 增删改查
+//  EverOS MEMORY SERVICE — CRUD
 // ══════════════════════════════════════════════════
 var EverOS=(function(){
   var _headers=function(){
@@ -1416,19 +1606,19 @@ var EverOS=(function(){
   function formatMemoryContent(note){
     var cat=CATEGORIES[note.cat]||{name:note.cat,icon:'📝'};
     var parts=[];
-    parts.push('互动对象：'+note.name);
-    parts.push('关系类型：'+cat.icon+' '+cat.name);
-    parts.push('能量值：'+(note.score>0?'+':'')+note.score+'（-5耗尽～+5充满）');
-    if(note.duration_min)parts.push('时长：'+note.duration_min+'分钟');
-    if(note.tags&&note.tags.length)parts.push('情绪标签：'+note.tags.join('、'));
-    if(note.note)parts.push('活动内容：'+note.note);
-    if(note.location)parts.push('地点：'+note.location);
-    parts.push('日期：'+note.time);
+    parts.push('Person: '+note.name);
+    parts.push('Relationship: '+cat.icon+' '+cat.name);
+    parts.push('Energy: '+(note.score>0?'+':'')+note.score+' (-5 drained ~ +5 fully charged)');
+    if(note.duration_min)parts.push('Duration: '+note.duration_min+' min');
+    if(note.tags&&note.tags.length)parts.push('Tags: '+note.tags.join(', '));
+    if(note.note)parts.push('Activity: '+note.note);
+    if(note.location)parts.push('Location: '+note.location);
+    parts.push('Date: '+note.time);
     if(note.visits&&note.visits.length){
-      parts.push('互动次数：'+(note.visits.length+1)+'次');
+      parts.push('Total interactions: '+(note.visits.length+1));
       note.visits.forEach(function(v,i){
-        var vp='第'+(i+2)+'次（'+v.time+'）：能量'+(v.score>0?'+':'')+v.score;
-        if(v.tags&&v.tags.length)vp+=' 情绪：'+v.tags.join('、');
+        var vp='#'+(i+2)+' ('+v.time+'): energy '+(v.score>0?'+':'')+v.score;
+        if(v.tags&&v.tags.length)vp+=' tags: '+v.tags.join(', ');
         if(v.note)vp+=' '+v.note;
         parts.push(vp);
       });
@@ -1454,12 +1644,12 @@ var EverOS=(function(){
     .then(function(r){return r.json();})
     .then(function(d){
       _online=true;
-      console.log('[EverOS] 存储成功:',note.name,(d.data&&d.data.task_id)||d.status||'');
+      console.log('[EverOS] Saved:',note.name,(d.data&&d.data.task_id)||d.status||'');
       if(callback)callback(null,d);
     })
     .catch(function(e){
       _online=false;
-      console.log('[EverOS] 存储失败 ('+EVEROS_MODE+'):',e.message);
+      console.log('[EverOS] Save failed ('+EVEROS_MODE+'):',e.message);
       if(callback)callback(e);
     });
   }
@@ -1529,10 +1719,10 @@ var EverOS=(function(){
     })
     .then(function(r){
       _online=r.ok;
-      console.log('[EverOS] 删除'+(r.ok?'成功':'失败')+':',noteId,'status='+r.status);
+      console.log('[EverOS] Delete '+(r.ok?'ok':'failed')+':',noteId,'status='+r.status);
       if(callback)callback(r.ok?null:new Error('status '+r.status));
     })
-    .catch(function(e){_online=false;console.log('[EverOS] 删除异常:',e.message);if(callback)callback(e);});
+    .catch(function(e){_online=false;console.log('[EverOS] Delete error:',e.message);if(callback)callback(e);});
   }
 
   function updateMemory(note,callback){
@@ -1544,13 +1734,13 @@ var EverOS=(function(){
   function syncAllNotes(notesList,callback){
     if(!notesList||!notesList.length){if(callback)callback();return;}
     var done=0,total=notesList.length;
-    console.log('[EverOS] 开始同步 '+total+' 条记录...');
+    console.log('[EverOS] Syncing '+total+' records...');
     notesList.forEach(function(n,i){
       setTimeout(function(){
         storeMemory(n,function(){
           done++;
           if(done===total){
-            console.log('[EverOS] 同步完成: '+done+'/'+total);
+            console.log('[EverOS] Sync done: '+done+'/'+total);
             if(callback)callback();
           }
         });
@@ -1813,17 +2003,17 @@ function _extractTokens(text){
 function _extractNoteKeywords(noteText){
   if(!noteText)return [];
   var kw=[];
-  var flavorWords=['辣','麻','甜','酸','苦','咸','鲜','香','醇','浓','淡','清','厚','滑',
-    '嫩','脆','软','糯','烫','冰','凉','热','油','腻','爽','回甘','丝滑','顺滑','绵密',
-    '焦香','烟熏','奶香','果香','花香','坚果','巧克力','柑橘','莓果','焦糖','蜂蜜','vanilla',
+  var flavorWords=['energizing','draining','calm','anxious','stressed','relaxed','happy',
+    'sad','inspired','tired','excited','motivated','drained','charged','peaceful',
+    'nervous','uplifted','productive','focused','distracted','supported','understood',
     'fruity','smoky','nutty','floral','citrus','sweet','bitter','sour','spicy','creamy',
     'rich','light','smooth','bold','mild','balanced'];
   var text=noteText.toLowerCase();
   flavorWords.forEach(function(fw){if(text.indexOf(fw)>=0)kw.push(fw);});
   var tokens=_extractTokens(noteText);
-  var stop=['的','了','很','是','在','有','和','也','都','不','这','那','就','但','还',
-    '会','可以','非常','比较','觉得','感觉','一个','一些','一点','可能','应该','真的',
-    'the','and','but','this','that','very','really','also','just','with','from','have'];
+  var stop=['the','and','but','this','that','very','really','also','just','with','from',
+    'have','was','had','did','for','not','are','been','were','would','could','should',
+    'they','them','their','when','then','what','how','who','which','there','where'];
   tokens.forEach(function(t){if(stop.indexOf(t)<0&&kw.indexOf(t)<0)kw.push(t);});
   return kw;
 }
@@ -1858,8 +2048,8 @@ function buildGraphData(){
   var gN=[],gL=[];
 
   // Central "self" node — always at origin
-  gN.push({id:'__self__',name:'我',_isSelf:true,color:'#FFFFFF',val:28,score:0,
-    catIcon:'⚡',catName:'自己',tags:[],note:'',visits:1});
+  gN.push({id:'__self__',name:'Me',_isSelf:true,color:'#FFFFFF',val:28,score:0,
+    catIcon:'⚡',catName:'Self',tags:[],note:'',visits:1});
 
   notes.forEach(function(n){
     var c=CATEGORIES[n.cat]||{color:'#888',name:n.cat,icon:'📝'};
@@ -1960,11 +2150,11 @@ function initGraph(){
           var posCount=notes.filter(function(nt){return (nt.score||0)>0;}).length;
           var negCount=notes.filter(function(nt){return (nt.score||0)<0;}).length;
           return '<div style="background:rgba(5,5,15,0.95);padding:12px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.3);max-width:220px;font-family:Inter,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.5)">'
-            +'<div style="font-size:10px;color:#fff;font-weight:600;letter-spacing:1px;margin-bottom:4px">⚡ 这是你</div>'
+            +'<div style="font-size:10px;color:#fff;font-weight:600;letter-spacing:1px;margin-bottom:4px">⚡ This is You</div>'
             +'<div style="font-size:12px;color:#ccc;line-height:1.6">'
-            +'🔴 充能互动：<b style="color:#FF3030">'+posCount+'</b> 次<br>'
-            +'🔵 耗能互动：<b style="color:#3080FF">'+negCount+'</b> 次<br>'
-            +'净能量：<b style="color:'+(totalEnergy>=0?'#FF3030':'#3080FF')+'">'+(totalEnergy>0?'+':'')+totalEnergy+'</b></div></div>';
+            +'🔴 Energizing: <b style="color:#FF3030">'+posCount+'</b><br>'
+            +'🔵 Draining: <b style="color:#3080FF">'+negCount+'</b><br>'
+            +'Net energy: <b style="color:'+(totalEnergy>=0?'#FF3030':'#3080FF')+'">'+(totalEnergy>0?'+':'')+totalEnergy+'</b></div></div>';
         }
         var q=graphSearchQuery;
         var noteText=(n.note||'').substring(0,80);
@@ -1974,7 +2164,7 @@ function initGraph(){
           +'<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:5px">'+highlightMatch(n.name,q)+'</div>'
           +(tagsText?'<div style="font-size:10px;color:#9cc7ff;margin-bottom:5px;line-height:1.5">'+highlightMatch(tagsText,q)+'</div>':'')
           +'<div style="font-size:11px;color:#7878a0;line-height:1.4">'+highlightMatch(noteText,q)+'</div>'
-          +'<div style="font-size:24px;font-weight:800;color:'+n.color+';margin-top:6px">'+(n.score>0?'+':'')+n.score+'<span style="font-size:11px;opacity:0.4"> 能量</span>'+(n.visits>1?' <span style="font-size:11px;opacity:0.5;margin-left:6px">×'+n.visits+'</span>':'')+'</div></div>';
+          +'<div style="font-size:24px;font-weight:800;color:'+n.color+';margin-top:6px">'+(n.score>0?'+':'')+n.score+'<span style="font-size:11px;opacity:0.4"> energy</span>'+(n.visits>1?' <span style="font-size:11px;opacity:0.5;margin-left:6px">×'+n.visits+'</span>':'')+'</div></div>';
       })
       .linkVisibility(function(l){return !l._hidden;})
       .linkLabel(function(l){
@@ -1983,10 +2173,10 @@ function initGraph(){
         if(!tn)return '';
         var score=l._score||0;
         var eColor=l._targetColor||'#888';
-        var energyLabel=score>0?('充能 +'+score):(score<0?('耗能 '+score):'中性 0');
-        var tags=(tn.tags||[]).join('、');
+        var energyLabel=score>0?('Energizing +'+score):(score<0?('Draining '+score):'Neutral 0');
+        var tags=(tn.tags||[]).join(', ');
         return '<div style="background:rgba(5,5,15,0.95);padding:12px 16px;border-radius:10px;border:1px solid '+eColor+'40;max-width:260px;font-family:Inter,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.5)">'
-          +'<div style="font-size:10px;color:'+eColor+';font-weight:600;letter-spacing:1px;margin-bottom:4px">'+(score>0?'🔴':'🔵')+' 与我的关系</div>'
+          +'<div style="font-size:10px;color:'+eColor+';font-weight:600;letter-spacing:1px;margin-bottom:4px">'+(score>0?'🔴':'🔵')+' My Relationship</div>'
           +'<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px">'+escapeHtml(tn.name||'')+'</div>'
           +'<div style="font-size:20px;font-weight:800;color:'+eColor+'">'+energyLabel+'</div>'
           +(tags?'<div style="font-size:10px;color:#9cc7ff;margin-top:6px">'+escapeHtml(tags)+'</div>':'')
@@ -2599,11 +2789,11 @@ function applyGraphSearch(rawQuery,focusFirst){
   });
 
   if(!graphSearchQuery){
-    meta.textContent=graphFocusedCategory?'已聚焦 '+(CATEGORIES[graphFocusedCategory]?CATEGORIES[graphFocusedCategory].name:graphFocusedCategory)+' · 点击右侧类别可切换':'输入名称、标签或品类';
+    meta.textContent=graphFocusedCategory?'Focused on '+(CATEGORIES[graphFocusedCategory]?CATEGORIES[graphFocusedCategory].name:graphFocusedCategory)+' · Click a category to switch':'Name, tag, or relationship type';
   }else if(graphSearchResults.length){
-    meta.textContent='高亮 '+graphSearchResults.length+' 条结果'+(graphFocusedCategory?' · 聚焦 '+(CATEGORIES[graphFocusedCategory]?CATEGORIES[graphFocusedCategory].name:graphFocusedCategory):'')+' · '+graphSearchResults.slice(0,2).map(function(n){return n.name;}).join('、')+(graphSearchResults.length>2?' ...':'');
+    meta.textContent=graphSearchResults.length+' result'+(graphSearchResults.length===1?'':'s')+(graphFocusedCategory?' · focused on '+(CATEGORIES[graphFocusedCategory]?CATEGORIES[graphFocusedCategory].name:graphFocusedCategory):'')+' · '+graphSearchResults.slice(0,2).map(function(n){return n.name;}).join(', ')+(graphSearchResults.length>2?' ...':'');
   }else{
-    meta.textContent='没有匹配结果';
+    meta.textContent='No results found';
   }
 
   if(Graph){
@@ -2658,7 +2848,7 @@ document.getElementById('graph-search').oninput=function(e){
       if(extraMatches.length){
         graphSearchResults=graphSearchResults.concat(extraMatches);
         var meta=document.getElementById('search-meta');
-        meta.textContent='高亮 '+graphSearchResults.length+' 条结果（含语义匹配 '+extraMatches.length+' 条）'
+        meta.textContent=graphSearchResults.length+' result'+(graphSearchResults.length===1?'':'s')+' (incl. '+extraMatches.length+' semantic match'+(extraMatches.length===1?'':'es')+')'
           +(graphSearchResults.length>0?' · '+graphSearchResults.slice(0,2).map(function(n){return n.name;}).join('、'):'')
           +(graphSearchResults.length>2?' ...':'');
         if(Graph)Graph.nodeVisibility(function(n){return !n._hidden;}).linkVisibility(function(l){return !l._hidden;}).graphData(Graph.graphData());
@@ -2669,7 +2859,7 @@ document.getElementById('graph-search').oninput=function(e){
 
 // ── CHAT ────────────────────────────────────────
 var chatArea=document.getElementById('chat-area'),chatInput=document.getElementById('chat-input'),typingEl=document.getElementById('typing');
-function addMsg(t,type){if(!chatArea)return;var d=document.createElement('div');d.className='msg '+type;if(type==='ai')d.innerHTML='<div class="sender">AI 品鉴师 · EverOS</div>'+t;else d.textContent=t;chatArea.appendChild(d);chatArea.scrollTop=chatArea.scrollHeight;}
+function addMsg(t,type){if(!chatArea)return;var d=document.createElement('div');d.className='msg '+type;if(type==='ai')d.innerHTML='<div class="sender">AI Advisor · EverOS</div>'+t;else d.textContent=t;chatArea.appendChild(d);chatArea.scrollTop=chatArea.scrollHeight;}
 function handleChat(){
   if(!chatInput)return;var q=chatInput.value.trim();if(!q)return;
   addMsg(q,'user');chatInput.value='';
@@ -2679,7 +2869,7 @@ function handleChat(){
     EverOS.search(q,{method:'hybrid',top_k:5},function(err,results){
       typingEl.style.display='none';
       if(!err&&results.length>0){
-        var resp='<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">🧠 基于 EverOS 记忆检索</div>';
+        var resp='<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">🧠 Based on EverOS memory</div>';
         var matchedNotes=[];
         results.forEach(function(r){
           var found=notes.filter(function(n){return n.id===r.id||r.content.indexOf(n.name)>=0;})[0];
@@ -2694,16 +2884,16 @@ function handleChat(){
               +(n.note?'<div style="font-size:11px;color:var(--text2);margin-top:3px">'+n.note.substring(0,60)+(n.note.length>60?'...':'')+'</div>':'')
               +'</div>';
           }).join('');
-          if(matchedNotes.length>3)resp+='<div style="font-size:11px;color:var(--text3);margin-top:4px">还有 '+(matchedNotes.length-3)+' 条相关记忆...</div>';
+          if(matchedNotes.length>3)resp+='<div style="font-size:11px;color:var(--text3);margin-top:4px">+'+(matchedNotes.length-3)+' more related memories...</div>';
         }else{
           resp+=results.slice(0,3).map(function(r){
             return '<div style="background:var(--surface2);padding:8px 12px;border-radius:8px;margin-bottom:4px;font-size:11px;color:var(--text2);line-height:1.5">'
               +r.content.substring(0,120)+(r.content.length>120?'...':'')
-              +'<span style="float:right;font-size:9px;color:var(--text3)">相关度 '+Math.round(r.score*100)+'%</span></div>';
+              +'<span style="float:right;font-size:9px;color:var(--text3)">relevance '+Math.round(r.score*100)+'%</span></div>';
           }).join('');
         }
         var localResp=genResp(q);
-        if(localResp.indexOf('试试')!==0)resp+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.04)">'+localResp+'</div>';
+        if(localResp.indexOf('Try')!==0)resp+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.04)">'+localResp+'</div>';
         addMsg(resp,'ai');
       }else{
         typingEl.style.display='none';
@@ -2716,11 +2906,11 @@ function handleChat(){
 }
 function genResp(query){
   var q=query.toLowerCase();
-  if(q.indexOf('推荐')>=0||q.indexOf('建议')>=0){var cat=null;Object.keys(CATEGORIES).forEach(function(k){if(q.indexOf(CATEGORIES[k].name)>=0)cat=k;});var pool=cat?notes.filter(function(n){return n.cat===cat;}):notes;var s=pool.slice().sort(function(a,b){return b.score-a.score;});var t=s[0];if(!t)return '没有足够记录。';var r='🏆 推荐 <b>'+t.name+'</b>（'+t.score+'/10）<br>'+t.tags.join('、');if(s[1])r+='<br><br>也推荐：<b>'+s[1].name+'</b>（'+s[1].score+'/10）';return r;}
-  if(q.indexOf('上次')>=0||q.indexOf('最近')>=0){var r=notes.slice().sort(function(a,b){return b.time>a.time?1:-1;})[0];if(!r)return '暂无。';var c=CATEGORIES[r.cat]||{icon:'📝',name:r.cat};return '最近：<b>'+r.name+'</b>（'+c.icon+' '+c.name+'）'+r.time+'<br><b>'+r.score+'/10</b>';}
-  if(q.indexOf('统计')>=0||q.indexOf('多少')>=0){var cats={};notes.forEach(function(n){cats[n.cat]=(cats[n.cat]||0)+1;});var avg=(notes.reduce(function(s,n){return s+n.score;},0)/notes.length).toFixed(1);var r='📊 <b>'+notes.length+'</b>条，均分<b>'+avg+'</b><br><br>';Object.keys(cats).forEach(function(k){var c=CATEGORIES[k]||{icon:'📝',name:k};r+=c.icon+' '+c.name+'：'+cats[k]+'<br>';});return r;}
-  if(q.indexOf('满分')>=0||q.indexOf('最好')>=0){var p=notes.filter(function(n){return n.score===10;});if(!p.length)return '还没有满分！';return '⭐ '+p.map(function(n){return '<b>'+n.name+'</b>';}).join('、');}
-  return '试试：推荐咖啡 / 统计 / 我的偏好 / 上次喝了什么';
+  if(/recommend|suggest/i.test(q)){var cat=null;Object.keys(CATEGORIES).forEach(function(k){if(q.toLowerCase().indexOf(CATEGORIES[k].name.toLowerCase())>=0)cat=k;});var pool=cat?notes.filter(function(n){return n.cat===cat;}):notes;var s=pool.slice().sort(function(a,b){return b.score-a.score;});var t=s[0];if(!t)return 'Not enough records.';var r='🏆 Top: <b>'+t.name+'</b> (energy '+(t.score>0?'+':'')+t.score+')<br>'+t.tags.join(', ');if(s[1])r+='<br><br>Also: <b>'+s[1].name+'</b> (energy '+(s[1].score>0?'+':'')+s[1].score+')';return r;}
+  if(/recent|last time/i.test(q)){var r=notes.slice().sort(function(a,b){return b.time>a.time?1:-1;})[0];if(!r)return 'No records yet.';var c=CATEGORIES[r.cat]||{icon:'📝',name:r.cat};return 'Recent: <b>'+r.name+'</b> ('+c.icon+' '+c.name+') '+r.time+'<br><b>'+(r.score>0?'+':'')+r.score+' energy</b>';}
+  if(/stats|how many|count/i.test(q)){var cats={};notes.forEach(function(n){cats[n.cat]=(cats[n.cat]||0)+1;});var avg=(notes.reduce(function(s,n){return s+n.score;},0)/notes.length).toFixed(1);var r='📊 <b>'+notes.length+'</b> interactions, avg energy <b>'+avg+'</b><br><br>';Object.keys(cats).forEach(function(k){var c=CATEGORIES[k]||{icon:'📝',name:k};r+=c.icon+' '+c.name+': '+cats[k]+'<br>';});return r;}
+  if(/best|top/i.test(q)){var p=notes.filter(function(n){return n.score===5;});if(!p.length)return 'No +5 interactions yet!';return '⭐ '+p.map(function(n){return '<b>'+n.name+'</b>';}).join(', ');}
+  return 'Try: recommend / stats / recent interactions';
 }
 var _chatSendBtn=document.getElementById('chat-send');
 if(_chatSendBtn)_chatSendBtn.onclick=handleChat;
@@ -2743,12 +2933,12 @@ function renderCategories(){
       var avgColor=avgEnergy!==null?energyColor(avgEnergy):c.color;
       var card=document.createElement('div');card.className='cat-card';
       card.innerHTML='<div class="cat-card-actions">'
-        +'<button class="cat-action-btn edit" data-cat="'+ck+'" title="编辑">✎</button>'
-        +'<button class="cat-action-btn del" data-cat="'+ck+'" title="删除">✕</button>'
+        +'<button class="cat-action-btn edit" data-cat="'+ck+'" title="Edit">✎</button>'
+        +'<button class="cat-action-btn del" data-cat="'+ck+'" title="Delete">✕</button>'
         +'</div>'
         +'<div class="cat-icon" style="background:'+c.color+'15;border:1px solid '+c.color+'20">'+c.icon+'</div>'
         +'<div class="ca" style="color:'+avgColor+'">'+avgStr+'</div>'
-        +'<h4>'+c.name+'</h4><div class="cc">'+cnt+' 次互动</div>'
+        +'<h4>'+c.name+'</h4><div class="cc">'+cnt+' interaction'+(cnt===1?'':'s')+'</div>'
         +'<div class="cb"><div class="cf" style="width:'+(cnt/mx*100)+'%;background:'+c.color+'"></div></div>';
       card.onclick=function(e){
         if(e.target.classList.contains('cat-action-btn'))return;
@@ -2759,7 +2949,7 @@ function renderCategories(){
   });
   // Add new category card
   var add=document.createElement('div');add.className='cat-card';add.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:140px;border-style:dashed';
-  add.innerHTML='<div style="font-size:32px;color:var(--text3)">+</div><div style="font-size:12px;color:var(--text2);margin-top:4px">添加关系类型</div>';
+  add.innerHTML='<div style="font-size:32px;color:var(--text3)">+</div><div style="font-size:12px;color:var(--text2);margin-top:4px">Add Type</div>';
   add.onclick=function(){switchView('record-view');};grid.appendChild(add);
 
   // Bind edit/delete buttons
@@ -2773,14 +2963,14 @@ function renderCategories(){
 
 function editCategory(ck){
   var c=CATEGORIES[ck];if(!c)return;
-  showModal('<h3>编辑品类</h3>'
-    +'<div class="input-group"><label>名称</label><input type="text" id="edit-cat-name" value="'+c.name+'"></div>'
-    +'<div class="input-group"><label>图标 (emoji)</label><input type="text" id="edit-cat-icon" value="'+c.icon+'" style="font-size:20px"></div>'
-    +'<div class="input-group"><label>颜色</label><input type="color" id="edit-cat-color" value="'+c.color+'" style="height:40px;cursor:pointer"></div>'
-    +'<div class="input-group"><label>所属大类</label><select id="edit-cat-parent">'+Object.keys(TAXONOMY).map(function(k){return '<option value="'+k+'"'+(c.parent===k?' selected':'')+'>'+TAXONOMY[k].name+'</option>';}).join('')+'</select></div>'
+  showModal('<h3>Edit Type</h3>'
+    +'<div class="input-group"><label>Name</label><input type="text" id="edit-cat-name" value="'+c.name+'"></div>'
+    +'<div class="input-group"><label>Icon (emoji)</label><input type="text" id="edit-cat-icon" value="'+c.icon+'" style="font-size:20px"></div>'
+    +'<div class="input-group"><label>Color</label><input type="color" id="edit-cat-color" value="'+c.color+'" style="height:40px;cursor:pointer"></div>'
+    +'<div class="input-group"><label>Parent Group</label><select id="edit-cat-parent">'+Object.keys(TAXONOMY).map(function(k){return '<option value="'+k+'"'+(c.parent===k?' selected':'')+'>'+TAXONOMY[k].name+'</option>';}).join('')+'</select></div>'
     +'<div class="modal-actions">'
-    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">取消</button>'
-    +'<button class="btn-p" id="save-cat-edit">保存</button></div>');
+    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">Cancel</button>'
+    +'<button class="btn-p" id="save-cat-edit">Save</button></div>');
   document.getElementById('save-cat-edit').onclick=function(){
     var newName=document.getElementById('edit-cat-name').value.trim();
     var newIcon=document.getElementById('edit-cat-icon').value.trim();
@@ -2800,12 +2990,12 @@ function editCategory(ck){
 function deleteCategory(ck){
   var c=CATEGORIES[ck];if(!c)return;
   var cnt=notes.filter(function(n){return n.cat===ck;}).length;
-  showModal('<h3>删除品类</h3>'
-    +'<p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:4px">确定要删除 <b style="color:var(--text)">'+c.icon+' '+c.name+'</b> 吗？</p>'
-    +(cnt?'<p style="color:var(--danger);font-size:12px">该品类下有 '+cnt+' 条品鉴记录，将一并删除。</p>':'')
+  showModal('<h3>Delete Type</h3>'
+    +'<p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:4px">Delete <b style="color:var(--text)">'+c.icon+' '+c.name+'</b>?</p>'
+    +(cnt?'<p style="color:var(--danger);font-size:12px">This type has '+cnt+' interaction'+(cnt===1?'':'s')+' which will also be deleted.</p>':'')
     +'<div class="modal-actions">'
-    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">取消</button>'
-    +'<button class="btn-danger" id="confirm-del-cat">删除</button></div>');
+    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">Cancel</button>'
+    +'<button class="btn-danger" id="confirm-del-cat">Delete</button></div>');
   document.getElementById('confirm-del-cat').onclick=function(){
     notes=notes.filter(function(n){return n.cat!==ck;});
     TAXONOMY[c.parent].children=TAXONOMY[c.parent].children.filter(function(x){return x!==ck;});
@@ -2819,7 +3009,7 @@ function showCatDetail(ck){
   var c=CATEGORIES[ck];if(!c)return;
   var cn=notes.filter(function(n){return n.cat===ck;}).sort(function(a,b){return b.score-a.score;});
   document.getElementById('cat-detail-title').textContent=c.icon+' '+c.name;
-  document.getElementById('cat-detail-cnt').textContent=cn.length+' 条记录';
+  document.getElementById('cat-detail-cnt').textContent=cn.length+' record'+(cn.length===1?'':'s');
   var list=document.getElementById('cat-note-list');list.innerHTML='';
   cn.forEach(function(n){
     var item=document.createElement('div');item.className='note-item';
@@ -2830,8 +3020,8 @@ function showCatDetail(ck){
       +(n.location?'<div style="font-size:10px;color:var(--accent2);margin-top:4px">📍 '+n.location+'</div>':'')
       +'<div class="ni-time">'+n.time+'</div></div>'
       +'<div class="ni-actions">'
-      +'<button class="ni-act edit" data-nid="'+n.id+'" title="编辑">✎</button>'
-      +'<button class="ni-act del" data-nid="'+n.id+'" title="删除">✕</button></div>';
+      +'<button class="ni-act edit" data-nid="'+n.id+'" title="Edit">✎</button>'
+      +'<button class="ni-act del" data-nid="'+n.id+'" title="Delete">✕</button></div>';
     item.onclick=function(e){
       if(e.target.classList.contains('ni-act'))return;
       showDetail(n);
@@ -2851,15 +3041,15 @@ function showCatDetail(ck){
 function editNote(nid,ck){
   var note=notes.filter(function(n){return n.id===nid;})[0];
   if(!note)return;
-  showModal('<h3>编辑品鉴记录</h3>'
-    +'<div class="input-group"><label>名称</label><input type="text" id="edit-note-name" value="'+note.name+'"></div>'
-    +'<div class="input-group"><label>评分 (1-10)</label><input type="number" id="edit-note-score" value="'+note.score+'" min="1" max="10"></div>'
-    +'<div class="input-group"><label>品鉴笔记</label><textarea id="edit-note-text" style="min-height:80px">'+note.note+'</textarea></div>'
-    +'<div class="input-group"><label>风味标签 (逗号分隔)</label><input type="text" id="edit-note-tags" value="'+note.tags.join(', ')+'"></div>'
-    +'<div class="input-group"><label>地点 / 门店</label><input type="text" id="edit-note-loc" value="'+(note.location||'')+'"></div>'
+  showModal('<h3>Edit Interaction</h3>'
+    +'<div class="input-group"><label>Name</label><input type="text" id="edit-note-name" value="'+note.name+'"></div>'
+    +'<div class="input-group"><label>Energy (-5 to +5)</label><input type="number" id="edit-note-score" value="'+note.score+'" min="-5" max="5"></div>'
+    +'<div class="input-group"><label>Notes</label><textarea id="edit-note-text" style="min-height:80px">'+note.note+'</textarea></div>'
+    +'<div class="input-group"><label>Emotion Tags (comma separated)</label><input type="text" id="edit-note-tags" value="'+note.tags.join(', ')+'"></div>'
+    +'<div class="input-group"><label>Location / Setting</label><input type="text" id="edit-note-loc" value="'+(note.location||'')+'"></div>'
     +'<div class="modal-actions">'
-    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">取消</button>'
-    +'<button class="btn-p" id="save-note-edit">保存</button></div>');
+    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">Cancel</button>'
+    +'<button class="btn-p" id="save-note-edit">Save</button></div>');
   document.getElementById('save-note-edit').onclick=function(){
     note.name=document.getElementById('edit-note-name').value.trim()||note.name;
     note.score=parseInt(document.getElementById('edit-note-score').value)||note.score;
@@ -2873,11 +3063,11 @@ function editNote(nid,ck){
 function deleteNote(nid,ck){
   var note=notes.filter(function(n){return n.id===nid;})[0];
   if(!note)return;
-  showModal('<h3>删除品鉴记录</h3>'
-    +'<p style="color:var(--text2);font-size:13px">确定要删除 <b style="color:var(--text)">'+note.name+'</b> 吗？此操作不可撤销。</p>'
+  showModal('<h3>Delete Interaction</h3>'
+    +'<p style="color:var(--text2);font-size:13px">Delete <b style="color:var(--text)">'+note.name+'</b>? This cannot be undone.</p>'
     +'<div class="modal-actions">'
-    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">取消</button>'
-    +'<button class="btn-danger" id="confirm-del-note">删除</button></div>');
+    +'<button class="btn-s" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'open\')">Cancel</button>'
+    +'<button class="btn-danger" id="confirm-del-note">Delete</button></div>');
   document.getElementById('confirm-del-note').onclick=function(){
     notes=notes.filter(function(n){return n.id!==nid;});
     EverOS.delete(nid); // Soft delete from EverOS memory
@@ -2901,7 +3091,7 @@ function showDetail(note){
   var priceHtml='';
   if(note.price){
     if(note.price.type==='avg'){
-      priceHtml='<div style="font-size:12px;color:var(--accent);margin-top:8px">💰 ¥'+note.price.price+' <span style="opacity:0.5;font-size:10px">人均（总价 ¥'+note.price.total+' ÷ '+note.price.people+'人）</span></div>';
+      priceHtml='<div style="font-size:12px;color:var(--accent);margin-top:8px">💰 ¥'+note.price.price+' <span style="opacity:0.5;font-size:10px">per person (total ¥'+note.price.total+' ÷ '+note.price.people+')</span></div>';
     }else{
       priceHtml='<div style="font-size:12px;color:var(--accent);margin-top:8px">💰 ¥'+note.price.price+'</div>';
     }
@@ -2913,15 +3103,15 @@ function showDetail(note){
   var visitCount=visits.length+1;
   var visitsHtml='';
   if(visits.length>0){
-    visitsHtml='<div class="dp-visits"><h4>品鉴记录 ×'+visitCount+'</h4>';
+    visitsHtml='<div class="dp-visits"><h4>Interaction History ×'+visitCount+'</h4>';
     // Show original tasting first
-    visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(note.score)+'">'+(note.score>0?'+':'')+note.score+'</span><span style="opacity:0.4;font-size:10px"> 能量 · 首次 · '+note.time+'</span></div>';
+    visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(note.score)+'">'+(note.score>0?'+':'')+note.score+'</span><span style="opacity:0.4;font-size:10px"> energy · 1st · '+note.time+'</span></div>';
     if(note.tags.length)visitsHtml+='<div class="vi-tags">'+note.tags.map(function(t){return '<span class="vi-tag">'+t+'</span>';}).join('')+'</div>';
     if(note.note)visitsHtml+='<div style="margin-top:4px;font-size:11px;color:var(--text3)">'+note.note.substring(0,80)+(note.note.length>80?'...':'')+'</div>';
     visitsHtml+='</div>';
     // Show each re-tasting
     visits.forEach(function(v,i){
-      visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(v.score)+'">'+(v.score>0?'+':'')+v.score+'</span><span style="opacity:0.4;font-size:10px"> 能量 · 第'+(i+2)+'次 · '+v.time+'</span></div>';
+      visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(v.score)+'">'+(v.score>0?'+':'')+v.score+'</span><span style="opacity:0.4;font-size:10px"> energy · #'+(i+2)+' · '+v.time+'</span></div>';
       if(v.tags&&v.tags.length)visitsHtml+='<div class="vi-tags">'+v.tags.map(function(t){return '<span class="vi-tag">'+t+'</span>';}).join('')+'</div>';
       if(v.note)visitsHtml+='<div style="margin-top:4px;font-size:11px;color:var(--text3)">'+v.note.substring(0,80)+(v.note.length>80?'...':'')+'</div>';
       if(v.photo)visitsHtml+='<div style="margin-top:6px;border-radius:6px;overflow:hidden;max-height:140px"><img src="'+v.photo+'" style="width:100%;display:block"></div>';
@@ -2937,49 +3127,47 @@ function showDetail(note){
   document.getElementById('detail-content').innerHTML=
     '<div class="dp-cat" style="color:'+cat.color+'">'+cat.icon+' '+cat.name+(visitCount>1?' <span style="font-size:9px;opacity:0.5;margin-left:4px">×'+visitCount+'</span>':'')+'</div>'
     +'<h3>'+note.name+'</h3>'
-    +'<div class="dp-sc" style="color:'+energyColor(latestScore)+'">'+(latestScore>0?'+':'')+latestScore+'<span style="font-size:16px;opacity:0.3"> 能量</span></div>'
+    +'<div class="dp-sc" style="color:'+energyColor(latestScore)+'">'+(latestScore>0?'+':'')+latestScore+'<span style="font-size:16px;opacity:0.3"> energy</span></div>'
     +'<div class="dp-tg">'+latestTags.map(function(t){return '<span class="dp-t">'+t+'</span>';}).join('')+'</div>'
     +'<div class="dp-n">'+(visits.length>0&&visits[visits.length-1].note?visits[visits.length-1].note:note.note)+'</div>'
     +locHtml+photoHtml
-    +'<div class="dp-time">📅 '+note.time+(note.duration_min?' · ⏱ '+note.duration_min+'分钟':'')+'</div>'
+    +'<div class="dp-time">📅 '+note.time+(note.duration_min?' · ⏱ '+note.duration_min+' min':'')+'</div>'
     +visitsHtml
-    +'<button class="btn-retaste" id="btn-retaste">＋ 再次互动</button>'
+    +'<button class="btn-retaste" id="btn-retaste">＋ Log Follow-up</button>'
     +'<div class="retaste-form" id="retaste-form">'
-      +'<label>能量值（-5~+5）</label><div class="rt-score-row" id="rt-score-row"></div>'
-      +'<label>情绪标签</label><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px" id="rt-tags-row"><input type="text" id="rt-tag-input" placeholder="输入情绪标签回车" style="flex:1;min-width:100px;padding:5px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;outline:none;font-family:inherit"></div>'
-      +'<label>活动内容 &amp; 感受</label><textarea id="rt-notes" placeholder="这次的感受..."></textarea>'
-      +'<label>本次价格 <span style="opacity:0.4;font-weight:400">（选填）</span></label>'
-      +'<div class="price-wrap"><div class="price-mode-toggle" id="rt-price-mode-toggle"><span class="price-mode sel" data-mode="unit">单价</span><span class="price-mode" data-mode="avg">人均</span></div>'
-      +'<div class="price-inputs"><div id="rt-price-unit-group" style="display:flex;align-items:center;gap:6px"><input type="number" id="rt-price" placeholder="0.00" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"><span style="font-size:11px;color:var(--text3)">元</span></div>'
-      +'<div id="rt-price-avg-group" style="display:none"><div style="display:flex;gap:8px;align-items:center"><input type="number" id="rt-price-total" placeholder="总价" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"><span style="color:var(--text3);font-size:12px">÷</span><input type="number" id="rt-price-people" placeholder="人数" min="1" step="1" value="2" style="width:68px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"><span style="font-size:11px;color:var(--text3)">人</span></div><div class="price-avg-result" id="rt-price-avg-result"></div></div>'
+      +'<label>Energy Score (-5~+5)</label><div class="rt-score-row" id="rt-score-row"></div>'
+      +'<label>Emotion Tags</label><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px" id="rt-tags-row"><input type="text" id="rt-tag-input" placeholder="Press Enter to add tags" style="flex:1;min-width:100px;padding:5px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;outline:none;font-family:inherit"></div>'
+      +'<label>Activity &amp; Feelings</label><textarea id="rt-notes" placeholder="How did it feel this time..."></textarea>'
+      +'<label>Price <span style="opacity:0.4;font-weight:400">(optional)</span></label>'
+      +'<div class="price-wrap"><div class="price-mode-toggle" id="rt-price-mode-toggle"><span class="price-mode sel" data-mode="unit">Unit</span><span class="price-mode" data-mode="avg">Per Person</span></div>'
+      +'<div class="price-inputs"><div id="rt-price-unit-group" style="display:flex;align-items:center;gap:6px"><input type="number" id="rt-price" placeholder="0.00" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"></div>'
+      +'<div id="rt-price-avg-group" style="display:none"><div style="display:flex;gap:8px;align-items:center"><input type="number" id="rt-price-total" placeholder="Total" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"><span style="color:var(--text3);font-size:12px">÷</span><input type="number" id="rt-price-people" placeholder="People" min="1" step="1" value="2" style="width:68px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"></div><div class="price-avg-result" id="rt-price-avg-result"></div></div>'
       +'</div></div>'
-      +'<label>图片 <span style="opacity:0.4;font-weight:400">（选填）</span></label>'
+      +'<label>Photo <span style="opacity:0.4;font-weight:400">(optional)</span></label>'
       +'<input type="file" id="rt-photo" accept="image/*" capture="environment" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;font-family:inherit;outline:none;cursor:pointer">'
       +'<div id="rt-photo-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;max-height:160px"><img id="rt-photo-img" style="width:100%;display:block"></div>'
-      +'<div class="rt-actions"><button class="rt-btn rt-btn-cancel" id="rt-cancel">取消</button><button class="rt-btn rt-btn-save" id="rt-save">保存</button></div>'
+      +'<div class="rt-actions"><button class="rt-btn rt-btn-cancel" id="rt-cancel">Cancel</button><button class="rt-btn rt-btn-save" id="rt-save">Save</button></div>'
     +'</div>'
-    +(rel.length?'<div class="dp-rel"><h4>记忆关联 · '+rel.length+'</h4>'+rel.map(function(r){
+    +(rel.length?'<div class="dp-rel"><h4>Related Memories · '+rel.length+'</h4>'+rel.map(function(r){
       var rv=(r.visits?r.visits.length:0)+1;
       var rc=CATEGORIES[r.cat]||{icon:'📝',name:r.cat,color:'#888'};
       // Determine WHY this is related
       var reasons=[];
       if(r.cat===note.cat){
         var sim=noteSimilarity(note,r);
-        reasons.push('<span style="color:'+rc.color+'">同品类</span> 相似度 '+Math.round(sim*100)+'%');
-        // Detail: shared tags
+        reasons.push('<span style="color:'+rc.color+'">Same type</span> similarity '+Math.round(sim*100)+'%');
         var sTags=(r.tags||[]).filter(function(t){return (note.tags||[]).indexOf(t)>=0;});
-        if(sTags.length)reasons.push('共享标签: '+sTags.map(function(t){return '<b>'+t+'</b>';}).join('、'));
-        // Detail: shared name tokens
+        if(sTags.length)reasons.push('Shared tags: '+sTags.map(function(t){return '<b>'+t+'</b>';}).join(', '));
         var tokA=_extractTokens(note.name),tokB=_extractTokens(r.name);
         var nameMatch=tokA.filter(function(t){return tokB.indexOf(t)>=0;});
-        if(nameMatch.length)reasons.push('名称相近: '+nameMatch.join('、'));
+        if(nameMatch.length)reasons.push('Similar name: '+nameMatch.join(', '));
       }else{
         var crossTags=(r.tags||[]).filter(function(t){return (note.tags||[]).indexOf(t)>=0;});
-        if(crossTags.length)reasons.push('<span style="color:#af79ff">跨品类</span> 共享标签: '+crossTags.map(function(t){return '<b>'+t+'</b>';}).join('、'));
+        if(crossTags.length)reasons.push('<span style="color:#af79ff">Cross-type</span> shared tags: '+crossTags.map(function(t){return '<b>'+t+'</b>';}).join(', '));
       }
       return '<div class="dp-ri" data-id="'+r.id+'" style="border-left:3px solid '+rc.color+'">'
         +'<div class="dp-ri-n">'+rc.icon+' '+r.name+(rv>1?' <span style="opacity:0.4;font-size:10px">×'+rv+'</span>':'')+'</div>'
-        +'<div class="dp-ri-s">'+r.score+'/10 · '+r.tags.slice(0,3).join('、')+'</div>'
+        +'<div class="dp-ri-s">'+(r.score>0?'+':'')+r.score+' · '+r.tags.slice(0,3).join(', ')+'</div>'
         +(reasons.length?'<div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5">'+reasons.join('<br>')+'</div>':'')
         +'</div>';
     }).join('')+'</div>':'');
@@ -3044,7 +3232,7 @@ function showDetail(note){
     var total=parseFloat(document.getElementById('rt-price-total').value)||0;
     var people=parseInt(document.getElementById('rt-price-people').value)||1;
     var result=document.getElementById('rt-price-avg-result');
-    if(total>0&&people>0){result.textContent='≈ 人均 ¥'+(total/people).toFixed(2);}
+    if(total>0&&people>0){result.textContent='≈ ¥'+(total/people).toFixed(2)+' per person';}
     else{result.textContent='';}
   }
   document.getElementById('rt-price-total').oninput=calcRtAvgPrice;
@@ -3074,7 +3262,7 @@ function showDetail(note){
     rtForm.classList.remove('open');
   };
   document.getElementById('rt-save').onclick=function(){
-    if(rtScore===undefined||rtScore===null){alert('请选择能量值');return;}
+    if(rtScore===undefined||rtScore===null){alert('Please select an energy score');return;}
     if(!note.visits)note.visits=[];
     var rtPriceData=null;
     if(rtPriceMode==='unit'){
@@ -3134,7 +3322,7 @@ function startApp(){
     var parent=catData.parent;
     if(!parent||!TAXONOMY[parent]){
       // Default to "other" top-level group
-      if(!TAXONOMY.other)TAXONOMY.other={name:'其他',children:[]};
+      if(!TAXONOMY.other)TAXONOMY.other={name:'Other',children:[]};
       parent='other';
     }
     var color='#'+Math.floor(Math.random()*0x999999+0x333333).toString(16).padStart(6,'0');
@@ -3165,7 +3353,7 @@ function startApp(){
     var noteObj={
       id:'n'+Date.now(),
       cat:catKey,
-      name:data.name||'未命名',
+      name:data.name||'Unnamed',
       score:_normalizeScore(data.score),
       tags:Array.isArray(data.tags)?data.tags.slice():[],
       note:data.note||'',
@@ -3205,10 +3393,10 @@ function startApp(){
     var label=document.getElementById('everos-label');
     if(online){
       dot.style.background='#5ebe8e';label.textContent='EverOS ✓';
-      label.parentElement.title='EverOS 记忆服务已连接 ('+EVEROS_API+')';
+      label.parentElement.title='EverOS memory connected ('+EVEROS_API+')';
     }else{
       dot.style.background='#e85050';label.textContent='EverOS ✗';
-      label.parentElement.title='EverOS 记忆服务未连接 — 仅本地模式';
+      label.parentElement.title='EverOS offline — local mode only';
     }
   });
 }
@@ -3340,10 +3528,10 @@ window.onresize=function(){if(Graph)Graph.width(window.innerWidth).height(window
     var label=document.getElementById('everos-label');
     if(online){
       dot.style.background='#5ebe8e';label.textContent='EverOS ✓';
-      label.parentElement.title='EverOS 记忆服务已连接 ('+EVEROS_API+')';
+      label.parentElement.title='EverOS memory connected ('+EVEROS_API+')';
     }else{
       dot.style.background='#e85050';label.textContent='EverOS ✗';
-      label.parentElement.title='EverOS 记忆服务未连接 — 仅本地模式';
+      label.parentElement.title='EverOS offline — local mode only';
     }
   });
 })(); */

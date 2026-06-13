@@ -47,28 +47,28 @@ if(_EMBEDDED && window.__tvNotes && window.__tvCategories){
 }else{
   // ── STANDALONE MODE: built-in demo data ──
   CT={
-    coffee:{l:'咖啡',r:212,g:165,b:116,hex:'#d4a574',i:'☕'},
-    tea:{l:'茶',r:126,g:200,b:130,hex:'#7ec882',i:'🍵'},
-    wine:{l:'葡萄酒',r:199,g:91,b:122,hex:'#c75b7a',i:'🍷'},
-    whisky:{l:'威士忌',r:232,g:168,b:56,hex:'#e8a838',i:'🥃'},
-    sake:{l:'清酒',r:142,g:184,b:229,hex:'#8eb8e5',i:'🍶'}
+    coffee:{l:'Coffee',r:212,g:165,b:116,hex:'#d4a574',i:'☕'},
+    tea:{l:'Tea',r:126,g:200,b:130,hex:'#7ec882',i:'🍵'},
+    wine:{l:'Wine',r:199,g:91,b:122,hex:'#c75b7a',i:'🍷'},
+    whisky:{l:'Whisky',r:232,g:168,b:56,hex:'#e8a838',i:'🥃'},
+    sake:{l:'Sake',r:142,g:184,b:229,hex:'#8eb8e5',i:'🍶'}
   };
   RC=[
-    {id:1,c:'coffee',n:'埃塞俄比亚 耶加雪菲',d:'2025-04-12',s:92,f:['蓝莓','柑橘','巧克力'],o:'埃塞俄比亚',m:'V60',nt:'蓝莓果酱甜感。'},
-    {id:2,c:'coffee',n:'哥伦比亚 粉波旁',d:'2025-04-08',s:88,f:['焦糖','坚果','红苹果'],o:'哥伦比亚',m:'Kalita',nt:'焦糖甜感。'},
-    {id:3,c:'coffee',n:'巴拿马 瑰夏',d:'2025-03-28',s:95,f:['茉莉','佛手柑','蜂蜜'],o:'巴拿马',m:'V60',nt:'茉莉花香。'},
-    {id:4,c:'coffee',n:'肯尼亚 AA',d:'2025-03-15',s:90,f:['黑加仑','番茄'],o:'肯尼亚',m:'Chemex',nt:'黑加仑酸感。'},
-    {id:5,c:'coffee',n:'危地马拉 花神',d:'2025-03-05',s:87,f:['烟熏','可可'],o:'危地马拉',m:'法压壶',nt:'烟熏可可。'},
-    {id:6,c:'tea',n:'福鼎白毫银针',d:'2025-04-10',s:91,f:['毫香','蜜韵'],o:'福建',m:'盖碗',nt:'毫香蜜韵。'},
-    {id:7,c:'tea',n:'武夷正岩肉桂',d:'2025-04-02',s:93,f:['桂皮','岩韵'],o:'武夷山',m:'盖碗',nt:'岩韵显著。'},
-    {id:8,c:'tea',n:'安溪铁观音',d:'2025-03-20',s:86,f:['兰花','奶香'],o:'安溪',m:'盖碗',nt:'兰花香。'},
-    {id:9,c:'wine',n:'Opus One 2019',d:'2025-04-06',s:94,f:['黑醋栗','雪松'],o:'Napa Valley',m:'醒酒2h',nt:'单宁丝滑。'},
-    {id:10,c:'wine',n:'Penfolds Grange 2018',d:'2025-03-25',s:96,f:['黑莓','香料'],o:'S. Australia',m:'醒酒3h',nt:'层次丰富。'},
-    {id:11,c:'wine',n:'Château Margaux 2015',d:'2025-03-10',s:97,f:['紫罗兰','丝绒'],o:'Bordeaux',m:'醒酒2.5h',nt:'传奇年份。'},
-    {id:12,c:'whisky',n:'山崎 18年',d:'2025-04-04',s:93,f:['蜜瓜','水楢木'],o:'日本',m:'纯饮',nt:'东方香气。'},
-    {id:13,c:'whisky',n:'麦卡伦 25年',d:'2025-03-18',s:95,f:['干果','太妃糖'],o:'苏格兰',m:'纯饮',nt:'雪莉桶。'},
-    {id:14,c:'sake',n:'獺祭 二割三分',d:'2025-04-09',s:91,f:['白桃','花蜜'],o:'山口',m:'冷饮',nt:'白桃果香。'},
-    {id:15,c:'sake',n:'十四代',d:'2025-03-30',s:94,f:['哈密瓜','荔枝'],o:'山形',m:'冷饮',nt:'传说级。'},
+    {id:1,c:'coffee',n:'Ethiopia Yirgacheffe',d:'2025-04-12',s:3,f:['blueberry','citrus','chocolate'],o:'Ethiopia',m:'V60',nt:'Bright blueberry jam sweetness.'},
+    {id:2,c:'coffee',n:'Colombia Pink Bourbon',d:'2025-04-08',s:2,f:['caramel','nutty','red apple'],o:'Colombia',m:'Kalita',nt:'Caramel sweetness throughout.'},
+    {id:3,c:'coffee',n:'Panama Geisha',d:'2025-03-28',s:4,f:['jasmine','bergamot','honey'],o:'Panama',m:'V60',nt:'Floral jasmine aroma.'},
+    {id:4,c:'coffee',n:'Kenya AA',d:'2025-03-15',s:3,f:['blackcurrant','tomato'],o:'Kenya',m:'Chemex',nt:'Bright blackcurrant acidity.'},
+    {id:5,c:'coffee',n:'Guatemala Huehuetenango',d:'2025-03-05',s:2,f:['smoky','cocoa'],o:'Guatemala',m:'French Press',nt:'Smoky cocoa notes.'},
+    {id:6,c:'tea',n:'Bai Hao Yinzhen',d:'2025-04-10',s:3,f:['downy','honey'],o:'Fujian',m:'Gaiwan',nt:'Downy honey sweetness.'},
+    {id:7,c:'tea',n:'Wuyi Rock Cinnamon',d:'2025-04-02',s:4,f:['cinnamon','rocky'],o:'Wuyi',m:'Gaiwan',nt:'Distinct rock oolong character.'},
+    {id:8,c:'tea',n:'Anxi Tieguanyin',d:'2025-03-20',s:2,f:['orchid','creamy'],o:'Anxi',m:'Gaiwan',nt:'Orchid fragrance.'},
+    {id:9,c:'wine',n:'Opus One 2019',d:'2025-04-06',s:4,f:['blackcurrant','cedar'],o:'Napa Valley',m:'Decanted 2h',nt:'Silky tannins.'},
+    {id:10,c:'wine',n:'Penfolds Grange 2018',d:'2025-03-25',s:4,f:['blackberry','spice'],o:'S. Australia',m:'Decanted 3h',nt:'Rich and layered.'},
+    {id:11,c:'wine',n:'Château Margaux 2015',d:'2025-03-10',s:5,f:['violet','velvet'],o:'Bordeaux',m:'Decanted 2.5h',nt:'Legendary vintage.'},
+    {id:12,c:'whisky',n:'Yamazaki 18yr',d:'2025-04-04',s:4,f:['melon','mizunara oak'],o:'Japan',m:'Neat',nt:'Oriental aromatic character.'},
+    {id:13,c:'whisky',n:'Macallan 25yr',d:'2025-03-18',s:5,f:['dried fruit','toffee'],o:'Scotland',m:'Neat',nt:'Sherry cask excellence.'},
+    {id:14,c:'sake',n:'Dassai 23',d:'2025-04-09',s:3,f:['white peach','floral'],o:'Yamaguchi',m:'Chilled',nt:'White peach fruit.'},
+    {id:15,c:'sake',n:'Juyondai',d:'2025-03-30',s:5,f:['cantaloupe','lychee'],o:'Yamagata',m:'Chilled',nt:'Legendary.'},
   ];
 }
 // Group records by category
@@ -118,13 +118,13 @@ CK_ALL.forEach((k,i)=>{
   const onRing=CK.includes(k);
   const e=document.createElement('i');
   e.innerHTML=`<b style="background:${c.hex}"></b>${c.i} ${c.l} <span style="opacity:.5">·${G[k].length}</span>`
-    + (!onRing ? ' <span style="opacity:.35;font-size:8px">(隐)</span>' : '');
+    + (!onRing ? ' <span style="opacity:.35;font-size:8px">(hidden)</span>' : '');
   lgd.appendChild(e);
 });
 // Collapsed indicator
 const lgdTab=document.createElement('div');
 lgdTab.className='lgd-tab';
-lgdTab.innerHTML=`◁ ${CK_ALL.length} 关系`;
+lgdTab.innerHTML=`◁ ${CK_ALL.length} types`;
 lgd.parentElement.insertBefore(lgdTab,lgd.nextSibling);
 
 // ============ 3D MATH ============
@@ -917,7 +917,7 @@ function render(){
       ctx.fillRect(it.sx-sz*3,it.sy-sz*3,sz*6,sz*6);
     }
     ctx.restore();
-    tipEl.innerHTML=`<div class="tc" style="color:${cat.hex}">${cat.i} ${cat.l}</div><div style="font-size:12px;color:var(--sub)">${G[STRIPS[hovStrip].cat].length} 条品鉴记录 · 莫比乌斯第 ${hovStrip+1} 环</div>`;
+    tipEl.innerHTML=`<div class="tc" style="color:${cat.hex}">${cat.i} ${cat.l}</div><div style="font-size:12px;color:var(--sub)">${G[STRIPS[hovStrip].cat].length} records · Ring ${hovStrip+1}</div>`;
     tipEl.style.left=Math.min(mX+16,W-220)+'px';
     tipEl.style.top=Math.min(mY-30,H-80)+'px';
     tipEl.classList.add('show');
@@ -949,7 +949,7 @@ function render(){
 
   if(hov){
     const r=hov.rec,ct=CT[r.c];
-    tipEl.innerHTML=`<div class="tc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><div class="tn">${r.n}</div><div class="td">${r.d}</div><div class="ts">能量 <b style="color:${ct.hex}">${r.s>0?'+':''}${r.s}</b></div><div class="tf">${r.f.map(f=>`<span class="tt">${f}</span>`).join('')}</div>`;
+    tipEl.innerHTML=`<div class="tc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><div class="tn">${r.n}</div><div class="td">${r.d}</div><div class="ts">Energy <b style="color:${ct.hex}">${r.s>0?'+':''}${r.s}</b></div><div class="tf">${r.f.map(f=>`<span class="tt">${f}</span>`).join('')}</div>`;
     tipEl.style.left=Math.min(hov.sx+20,W-230)+'px';
     tipEl.style.top=Math.min(hov.sy-55,H-190)+'px';
     tipEl.classList.add('show');cv.style.cursor='pointer';
@@ -1849,7 +1849,7 @@ function drawSrcPlanet(n,t){
   srcCtx.fillText(n.rec.n.length>10?n.rec.n.slice(0,9)+'…':n.rec.n,n.x,n.y+sz+14*dp);
   srcCtx.fillStyle=`rgba(${cr},${cg},${cb},${(n.opacity*.55).toFixed(3)})`;
   srcCtx.font=`${9*dp}px 'Noto Sans SC',sans-serif`;
-  srcCtx.fillText(n.rec.s+' 分',n.x,n.y+sz+26*dp);
+  srcCtx.fillText((n.rec.s>0?'+':'')+n.rec.s,n.x,n.y+sz+26*dp);
 
   srcCtx.restore();
   n._screenR=sz/dp;n._screenX=n.x/dp;n._screenY=n.y/dp;
@@ -2187,11 +2187,11 @@ render=function(){_origRender();renderFocusLens();};
     return `<div class="st-cat" style="color:${_ct.hex}">${_ct.i} ${_ct.l}</div>
 <div class="st-name">${r.n}</div>
 <div class="st-meta">${r.d}${r.o?' · '+r.o:''}${r.m?' · '+r.m:''}</div>
-<div class="st-score">能量 <b style="color:${_ct.hex}">${r.s>0?'+':''}${r.s}</b></div>
+<div class="st-score">Energy <b style="color:${_ct.hex}">${r.s>0?'+':''}${r.s}</b></div>
 <div class="st-tags">${r.f.map(f=>'<span class="st-tag">'+f+'</span>').join('')}</div>
 <div class="st-fb">
-  <button onclick="voteSrc('${r.id}',1,this)">👍 准确</button>
-  <button onclick="voteSrc('${r.id}',-1,this)">👎 不对</button>
+  <button onclick="voteSrc('${r.id}',1,this)">👍 Accurate</button>
+  <button onclick="voteSrc('${r.id}',-1,this)">👎 Wrong</button>
 </div>`;
   }
 
@@ -2336,7 +2336,7 @@ function buildMsgEl(m){
     imgHtml='<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+m.imgs.map(src=>`<img src="${src}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.08)"/>`).join('')+'</div>';
   }
   const av=m.tp==='ai'
-    ? `<div class="mav" title="AI 品鉴师">✦</div>`
+    ? `<div class="mav" title="AI Advisor">✦</div>`
     : `<div class="uav" title="${USER.name}">${USER.initial}</div>`;
   d.innerHTML=`${av}<div><div class="mb">${m.html}${imgHtml}${refHtml}</div><div class="mti">${m.ts}</div></div>`;
   return d;
@@ -2686,7 +2686,7 @@ updateZoneClips();
 createPage();
 
 // Seed: only a greeting — page starts nearly empty, awaiting user input
-addMsg('ai','你好！我是你的 AI 关系顾问 ⚡<br>基于你的互动记忆，我可以分析谁给你充能、谁让你耗能，或帮你记录一次新的互动。');
+addMsg('ai','Hi! I\'m your AI Relationship Advisor ⚡<br>Based on your interaction history, I can analyze who energizes you, who drains you, or help you log a new interaction.');
 
 // Dynamic keyword search — auto-generated from actual CT (category table) and RC (records)
 // For each category: use its display name, key, and top flavor tags from records as keywords
@@ -2723,9 +2723,9 @@ function findByKeyword(text){
     if(catRecs.length>0){
       const catInfo=CT[matchedCat];
       const topN=catRecs.slice(0,3);
-      const resp=`${catInfo?catInfo.i:''} 你有 ${catRecs.length} 条${catInfo?catInfo.l:''}记录。`+
-        topN.map((r,i)=>`<br>${i+1}. <b>${r.n}</b> ${r.s} 分`).join('')+
-        (catRecs.length>3?`<br><span style="color:var(--sub)">…还有 ${catRecs.length-3} 条</span>`:'');
+      const resp=`${catInfo?catInfo.i:''} You have ${catRecs.length} ${catInfo?catInfo.l:''}record${catRecs.length===1?'':'s'}.`+
+        topN.map((r,i)=>`<br>${i+1}. <b>${r.n}</b> ${r.s>0?'+':''}${r.s}`).join('')+
+        (catRecs.length>3?`<br><span style="color:var(--sub)">…${catRecs.length-3} more</span>`:'');
       // refs = ALL records in this category (shown as planets in source tracing)
       return{r:resp,refs:catRecs};
     }
@@ -2735,29 +2735,29 @@ function findByKeyword(text){
     const catInfo=CT[r.c];
     // Also show all records in same category for context
     const sameCategory=RC.filter(rec=>rec.c===r.c).sort((a,b)=>b.s-a.s);
-    return{r:`<b>${r.n}</b>（${catInfo?catInfo.l:r.c}）${r.s} 分<br>${r.nt||'暂无笔记'}`,refs:sameCategory};
+    return{r:`<b>${r.n}</b> (${catInfo?catInfo.l:r.c}) ${r.s>0?'+':''}${r.s}<br>${r.nt||'No notes yet'}`,refs:sameCategory};
   }
   // General queries: summary/preference/analysis
-  if(/偏好|分析|总结|统计|overview|概览/.test(text)){
+  if(/prefer|analysis|summary|stats|overview/.test(text)){
     const total=RC.length;
     const cats=Object.keys(G).length;
     const avgScore=total>0?Math.round(RC.reduce((s,r)=>s+r.s,0)/total):0;
     // Show top records from each category for a comprehensive view
     const topPerCat=CK_ALL.map(k=>G[k].slice().sort((a,b)=>b.s-a.s)[0]).filter(Boolean);
     const topRecs=RC.slice().sort((a,b)=>b.s-a.s).slice(0,3);
-    return{r:`你共有 <b>${total}</b> 条互动记录，涵盖 <b>${cats}</b> 种关系类型，平均能量值 <b>${avgScore}</b>。`+
-      `<br>最高充能：`+topRecs.map(r=>`<b>${r.n}</b>(+${r.s})`).join('、'),refs:topPerCat};
+    return{r:`You have <b>${total}</b> interaction${total===1?'':'s'} across <b>${cats}</b> relationship type${cats===1?'':'s'}, average energy <b>${avgScore}</b>.`+
+      `<br>Top energizing: `+topRecs.map(r=>`<b>${r.n}</b>(+${r.s})`).join(', '),refs:topPerCat};
   }
   // Recommend
-  if(/推荐|最好|最佳|最高|充能|top/.test(text)){
+  if(/recommend|best|top|energize/.test(text)){
     const topRecs=RC.slice().sort((a,b)=>b.s-a.s).slice(0,8);
-    return{r:`最能给你充能的互动：`+topRecs.slice(0,5).map((r,i)=>`<br>${i+1}. <b>${r.n}</b>（${CT[r.c]?CT[r.c].l:r.c}）能量 ${r.s>0?'+':''}${r.s}`).join(''),refs:topRecs};
+    return{r:`Most energizing interactions:`+topRecs.slice(0,5).map((r,i)=>`<br>${i+1}. <b>${r.n}</b> (${CT[r.c]?CT[r.c].l:r.c}) energy ${r.s>0?'+':''}${r.s}`).join(''),refs:topRecs};
   }
   return null;
 }
 
 // Social interaction detection patterns — longer descriptive text with emotion/energy keywords
-const TASTING_PATTERNS=/充能|耗能|焦虑|平静|受启发|疲惫|有压力|开心|难过|紧张|放松|聊了|见了|和.*一起|约了|聚了|相处|互动|碰面|通话|视频/;
+const TASTING_PATTERNS=/energize|drain|anxious|calm|inspired|tired|stressed|happy|sad|nervous|relax|talked|met|together|hung out|spent time|interaction|call|video chat/i;
 
 // Build the save-record editable card HTML
 // Dynamic category name list for detection
@@ -2766,17 +2766,17 @@ const _catNameRegex=_catNames.length?new RegExp(_catNames.join('|')):null;
 function buildSaveCard(t2){
   const excerpt=t2.slice(0,80);
   const guessCategory=_catNameRegex?((t2.match(_catNameRegex))||[])[0]||'':'';
-  const guessFlavor=t2.match(/花香|果香|蜜韵|烟熏|清爽|浓郁|丝滑|甘甜|酸感|苦味|甜感|回甘|余韵|口感|香气|层次|醇厚|顺滑|细腻|柔和/g)||[];
-  return{r:`我检测到这可能是一条品鉴体验，要保存吗？`+
-    `<div class="pc"><h4>📝 保存品鉴记录</h4>`+
-    `<p style="margin:6px 0;font-size:12px;color:var(--sub)">以下信息已从对话中提取，请确认或编辑：</p>`+
-    `<div class="mr"><span>描述</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none;min-width:120px">${excerpt}</span></div>`+
-    (guessCategory?`<div class="mr"><span>品类</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessCategory}</span></div>`:'')+
-    (guessFlavor.length?`<div class="mr"><span>风味</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessFlavor.join('、')}</span></div>`:'')+
-    `<div class="mr"><span>评分</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">—</span></div>`+
+  const guessFlavor=t2.match(/charged|anxious|calm|inspired|tired|stressed|happy|sad|nervous|relaxed/gi)||[];
+  return{r:`Looks like this could be an interaction — want to save it?`+
+    `<div class="pc"><h4>📝 Save Interaction</h4>`+
+    `<p style="margin:6px 0;font-size:12px;color:var(--sub)">Extracted from your message — please confirm or edit:</p>`+
+    `<div class="mr"><span>Notes</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none;min-width:120px">${excerpt}</span></div>`+
+    (guessCategory?`<div class="mr"><span>Type</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessCategory}</span></div>`:'')+
+    (guessFlavor.length?`<div class="mr"><span>Tags</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessFlavor.join(', ')}</span></div>`:'')+
+    `<div class="mr"><span>Energy</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">—</span></div>`+
     `<div style="display:flex;gap:8px;margin-top:10px">`+
-    `<button class="cb" onclick="cC()">✓ 确认保存</button>`+
-    `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').style.display='none'">取消</button>`+
+    `<button class="cb" onclick="cC()">✓ Save</button>`+
+    `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').style.display='none'">Cancel</button>`+
     `</div></div>`,refs:[]};
 }
 
@@ -2796,7 +2796,7 @@ function findR(t2){
     return buildSaveCard(t2);
   }
 
-  return{r:'可以告诉我更多细节吗？例如是谁、你们做了什么、感觉如何？',refs:[]};
+  return{r:'Can you tell me more? Like who it was, what you did, and how it felt?',refs:[]};
 }
 
 // ---- Attachments (image input) ----
@@ -2879,7 +2879,7 @@ function buildAINewCard(reply,data,imgs){
   let catOptions;
   if(isNewCat){
     // Show all existing + AI's new suggestion (selected by default)
-    catOptions=`<option value="__new__" selected>+ 新建：${_esc(data.new_cat.icon||'📝')} ${_esc(data.new_cat.name||'未命名')}</option>`+
+    catOptions=`<option value="__new__" selected>+ New: ${_esc(data.new_cat.icon||'📝')} ${_esc(data.new_cat.name||'Unnamed')}</option>`+
       catKeys.map(k=>`<option value="${k}">${_esc(cats[k].name)}</option>`).join('');
   }else{
     const aiCat=data.cat&&cats[data.cat]?data.cat:catKeys[0];
@@ -2890,17 +2890,17 @@ function buildAINewCard(reply,data,imgs){
   const tagsStr=(data.tags||[]).join('、');
 
   return `${reply?_esc(reply)+'<br>':''}<div class="pc" data-card-id="${cardId}">`+
-    `<h4>⚡ 新互动 · 可编辑后保存</h4>`+
-    `<div class="mr"><span>和谁*</span><span contenteditable="true" data-field="name" style="${_editStyleSpan}">${_esc(data.name)||''}</span></div>`+
-    `<div class="mr"><span>关系类型*</span><select data-field="cat" style="${_editStyleSelect}">${catOptions}</select></div>`+
-    (isNewCat?`<div style="font-size:10px;color:var(--sub);margin:-4px 0 4px 70px">🌱 AI 建议新类型。如不需要，请在下拉里选已有类型。</div>`:'')+
-    `<div class="mr"><span>能量值</span><input type="number" data-field="score" min="-5" max="5" value="${score}" style="${_editStyleInput}" placeholder="-5~+5"></div>`+
-    `<div class="mr"><span>情绪标签</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}" data-placeholder="用 、或空格 分隔">${_esc(tagsStr)}</span></div>`+
-    `<div class="mr"><span>地点</span><span contenteditable="true" data-field="location" style="${_editStyleSpan}">${_esc(data.location||'')}</span></div>`+
-    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">活动内容</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
+    `<h4>⚡ New Interaction · Edit & Save</h4>`+
+    `<div class="mr"><span>With Who*</span><span contenteditable="true" data-field="name" style="${_editStyleSpan}">${_esc(data.name)||''}</span></div>`+
+    `<div class="mr"><span>Relationship*</span><select data-field="cat" style="${_editStyleSelect}">${catOptions}</select></div>`+
+    (isNewCat?`<div style="font-size:10px;color:var(--sub);margin:-4px 0 4px 70px">🌱 AI suggested a new type. Select an existing one if preferred.</div>`:'')+
+    `<div class="mr"><span>Energy</span><input type="number" data-field="score" min="-5" max="5" value="${score}" style="${_editStyleInput}" placeholder="-5~+5"></div>`+
+    `<div class="mr"><span>Tags</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}" data-placeholder="space or comma separated">${_esc(tagsStr)}</span></div>`+
+    `<div class="mr"><span>Location</span><span contenteditable="true" data-field="location" style="${_editStyleSpan}">${_esc(data.location||'')}</span></div>`+
+    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">Activity</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
     `<div style="display:flex;gap:8px;margin-top:10px">`+
-    `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ 确认保存</button>`+
-    `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').remove()">取消</button>`+
+    `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ Save</button>`+
+    `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').remove()">Cancel</button>`+
     `</div></div>`;
 }
 
@@ -2912,24 +2912,24 @@ function buildAIRevisitCard(reply,matchedId,data,imgs){
 
   const notes=window.__tvNotes||[];
   const matched=notes.find(n=>n.id===matchedId);
-  const matchedName=matched?matched.name:'已有记录';
+  const matchedName=matched?matched.name:'Existing record';
   const score=_normalizeScoreUI(data.score);
   const tagsStr=(data.tags||[]).join('、');
 
   return `${reply?_esc(reply)+'<br>':''}<div class="pc" data-card-id="${cardId}">`+
-    `<h4>🔁 再次互动 · ${_esc(matchedName)}</h4>`+
-    `<div class="mr"><span>能量值*</span><input type="number" data-field="score" min="-5" max="5" value="${score}" style="${_editStyleInput}" placeholder="-5~+5"></div>`+
-    `<div class="mr"><span>情绪标签</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}">${_esc(tagsStr)}</span></div>`+
-    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">活动内容</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
+    `<h4>🔁 Follow-up · ${_esc(matchedName)}</h4>`+
+    `<div class="mr"><span>Energy*</span><input type="number" data-field="score" min="-5" max="5" value="${score}" style="${_editStyleInput}" placeholder="-5~+5"></div>`+
+    `<div class="mr"><span>Tags</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}">${_esc(tagsStr)}</span></div>`+
+    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">Activity</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
     `<div style="display:flex;gap:8px;margin-top:10px">`+
-    `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ 添加为再次互动</button>`+
-    `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').remove()">取消</button>`+
+    `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ Save Follow-up</button>`+
+    `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').remove()">Cancel</button>`+
     `</div></div>`;
 }
 
 window.__aiSaveCard=function(cardId,btn){
   const cached=_aiCardCache[cardId];
-  if(!cached){alert('数据已过期，请重新输入');return;}
+  if(!cached){alert('Data expired, please re-enter');return;}
   const pc=btn.closest('.pc');
   if(!pc)return;
 
@@ -2955,25 +2955,25 @@ window.__aiSaveCard=function(cardId,btn){
 
   // Validation
   if(cached.type==='new'){
-    if(!data.name){alert('请填写人名');return;}
-    if(!data.cat){alert('请选择关系类型');return;}
+    if(!data.name){alert('Please enter a name');return;}
+    if(!data.cat){alert('Please select a relationship type');return;}
   }
   if(data.score===''||isNaN(parseFloat(data.score))){
-    alert('请填写能量值（-5 到 +5）');return;
+    alert('Please enter an energy score (-5 to +5)');return;
   }
 
   // If user kept the "__new__" cat, create the new category first
   if(data.cat==='__new__'){
     const newCatProposal=cached.data.new_cat;
     if(!newCatProposal||!newCatProposal.name){
-      alert('新类型信息缺失，请改选已有关系类型');return;
+      alert('New type info missing, please select an existing type');return;
     }
     if(window.__tvCreateCategory){
       const newKey=window.__tvCreateCategory(newCatProposal);
-      if(!newKey){alert('创建新分类失败');return;}
+      if(!newKey){alert('Failed to create new type');return;}
       data.cat=newKey;
     }else{
-      alert('当前不支持创建新分类');return;
+      alert('Creating new types is not supported here');return;
     }
   }
 
@@ -2985,10 +2985,10 @@ window.__aiSaveCard=function(cardId,btn){
   }
 
   if(saved){
-    pc.innerHTML='<div style="text-align:center;padding:12px;color:#5ebe8e;font-size:13px">✓ 已保存到你的品鉴记忆</div>';
+    pc.innerHTML='<div style="text-align:center;padding:12px;color:#5ebe8e;font-size:13px">✓ Saved to your interaction memory</div>';
     delete _aiCardCache[cardId];
   }else{
-    alert('保存失败');
+    alert('Save failed');
   }
 };
 
@@ -2998,7 +2998,7 @@ async function send2(){
   const imgs=pendingImgs.slice();
   pendingImgs=[];refreshAtch();
   ciEl.value='';
-  addMsg('user',t2||'<span style="color:var(--sub)">[图片]</span>',null,imgs);
+  addMsg('user',t2||'<span style="color:var(--sub)">[image]</span>',null,imgs);
 
   // Check if this message is feedback for a previous thumbs-down
   if(window._pendingFeedbackRecId&&t2){
@@ -3009,16 +3009,16 @@ async function send2(){
         feedbackLog[i].note=t2;break;
       }
     }
-    setTimeout(()=>addMsg('ai',`🔄 收到你的反馈："${t2.slice(0,60)}"。我会记住这次修正，下次溯源时改进。`),400);
+    setTimeout(()=>addMsg('ai',`🔄 Got your feedback: "${t2.slice(0,60)}". I'll keep this correction in mind.`),400);
     return;
   }
 
   // Show loading indicator
   const sb=document.getElementById('sb');
   if(sb)sb.disabled=true;
-  const loading=addMsgWithRef('ai','<span style="opacity:0.55">✦ 思考中…</span>');
+  const loading=addMsgWithRef('ai','<span style="opacity:0.55">✦ Thinking…</span>');
 
-  const userText=t2||'[用户上传了一张图片，请基于已有记录推荐相关品鉴]';
+  const userText=t2||'[User uploaded an image, please analyze based on existing records]';
   try{
     const notes=window.__tvNotes||[];
     const cats=window.__tvCategories||{};
@@ -3034,7 +3034,7 @@ async function send2(){
       })
     });
     const result=await r.json();
-    if(!r.ok)throw new Error(result.error||'AI 服务异常');
+    if(!r.ok)throw new Error(result.error||'AI service error');
 
     // Save turn to conversation history for future context
     _pushAiHistory('user',userText);
@@ -3048,7 +3048,7 @@ async function send2(){
       // Either explicitly new, or revisit but matched id is invalid → show editable new card
       html=buildAINewCard(result.reply,result.data||{},imgs);
     }else{
-      html=_esc(result.reply||'我没太理解，能再说一下吗？');
+      html=_esc(result.reply||"I didn't quite catch that — could you rephrase?");
     }
     loading.msg.html=html;
     renderPage(loading.page);
@@ -3065,7 +3065,7 @@ async function send2(){
     }
   }catch(e){
     console.error('[Sommelier] AI parse error:',e);
-    loading.msg.html='<span style="color:#e85050;font-size:12px">出错了：'+_esc(e.message||'网络异常')+'</span>';
+    loading.msg.html='<span style="color:#e85050;font-size:12px">Error: '+_esc(e.message||'Network error')+'</span>';
     renderPage(loading.page);
   }finally{
     if(sb)sb.disabled=false;
@@ -3073,7 +3073,7 @@ async function send2(){
 }
 document.getElementById('sb').addEventListener('click',send2);
 ciEl.addEventListener('keydown',e=>{if(e.key==='Enter')send2()});
-window.cC=()=>{addMsg('ai','✅ 已保存到你的品鉴记忆。')};
+window.cC=()=>{addMsg('ai','✅ Saved to your interaction memory.')};
 
 // ---- Feedback storage ----
 const feedbackLog=[];
@@ -3100,12 +3100,12 @@ window.voteSrc=function(recId,vote,btn){
     node.breathIndependent=true;
     node.opacity=1;
     node.size=node._baseSize*1.15;
-    setTimeout(()=>addMsg('ai','✓ 溯源确认，已记录。感谢你的反馈！'),300);
+    setTimeout(()=>addMsg('ai','✓ Confirmed — feedback recorded. Thanks!'),300);
   }
   if(vote===-1&&node){
     triggerSupernova(node);
     setTimeout(()=>{
-      addMsg('ai','🔄 收到你的反馈，这条溯源不太准确。能简单说明一下哪里不对吗？（直接在聊天框回复即可）');
+      addMsg('ai','🔄 Got it — this one was off. Can you briefly tell me what was wrong? (Just reply in the chat)');
     },800);
     window._pendingFeedbackRecId=recId;
   }
@@ -3116,8 +3116,8 @@ const modal=document.getElementById('modal'),mcEl=document.getElementById('mcard
 function showModal(r){const ct=CT[r.c];
   // Find existing feedback for this record
   const fb=feedbackLog.filter(f=>f.recId===r.id);
-  const fbHtml=fb.length?`<div style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)"><div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--sub);margin-bottom:6px">反馈记录</div>${fb.map(f=>`<div style="font-size:11px;color:${f.vote===1?'var(--accent)':'#ff5050'};margin-bottom:4px">${f.vote===1?'👍 确认准确':'👎 标记不准'}${f.note?' — '+f.note:''}<span style="color:var(--sub);margin-left:8px;font-size:10px">${new Date(f.ts).toLocaleTimeString()}</span></div>`).join('')}</div>`:'';
-  mcEl.innerHTML=`<div class="mcbn" style="background:linear-gradient(90deg,${ct.hex},rgba(255,255,255,.15))"></div><button class="mx" onclick="clM()">✕</button><div class="mbd"><div class="mcc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><h3>${r.n}</h3><div class="mr"><span>日期</span><span>${r.d}</span></div><div class="mr"><span>能量值</span><span style="color:${ct.hex};font-weight:700">${r.s>0?'+':''}${r.s}</span></div><div class="mn">${r.nt}</div><div class="mtags">${r.f.map(f=>`<span class="mtg">${f}</span>`).join('')}</div>${fbHtml}</div>`;
+  const fbHtml=fb.length?`<div style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)"><div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--sub);margin-bottom:6px">Feedback</div>${fb.map(f=>`<div style="font-size:11px;color:${f.vote===1?'var(--accent)':'#ff5050'};margin-bottom:4px">${f.vote===1?'👍 Accurate':'👎 Inaccurate'}${f.note?' — '+f.note:''}<span style="color:var(--sub);margin-left:8px;font-size:10px">${new Date(f.ts).toLocaleTimeString()}</span></div>`).join('')}</div>`:'';
+  mcEl.innerHTML=`<div class="mcbn" style="background:linear-gradient(90deg,${ct.hex},rgba(255,255,255,.15))"></div><button class="mx" onclick="clM()">✕</button><div class="mbd"><div class="mcc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><h3>${r.n}</h3><div class="mr"><span>Date</span><span>${r.d}</span></div><div class="mr"><span>Energy</span><span style="color:${ct.hex};font-weight:700">${r.s>0?'+':''}${r.s}</span></div><div class="mn">${r.nt}</div><div class="mtags">${r.f.map(f=>`<span class="mtg">${f}</span>`).join('')}</div>${fbHtml}</div>`;
   modal.classList.add('show');
 }
 window.clM=()=>{modal.classList.remove('show')};modal.addEventListener('click',e=>{if(e.target===modal)clM()});

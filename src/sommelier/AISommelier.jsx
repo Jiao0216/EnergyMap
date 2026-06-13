@@ -1,5 +1,5 @@
 /**
- * AISommelier — React wrapper for the AI 品鉴师 panel.
+ * AISommelier — React wrapper for the AI Advisor panel.
  *
  * Props:
  *   embedded (bool) — when true, hides own topbar and uses parent container for sizing.
@@ -76,7 +76,7 @@ export default function AISommelier({ embedded = false }) {
         <div className="zone zone-ul" id="zoneUl">
           <canvas id="sC"></canvas>
           <div className="ul-hdr">
-            能量 · <b>ENERGYMAP</b>
+            Energy · <b>ENERGYMAP</b>
           </div>
         </div>
         <div className="lgd" id="lgd"></div>
@@ -88,9 +88,9 @@ export default function AISommelier({ embedded = false }) {
         <div className="chat-wrap">
           <div className="atch" id="atch"></div>
           <div className="ciw">
-            <button className="atb" id="atbBtn" title="上传图片">📎</button>
-            <input className="cin" id="ci" placeholder="问我：谁最耗能？和谁互动最充电？上周你怎么了…" />
-            <button className="sbtn" id="sb" title="发送">➤</button>
+            <button className="atb" id="atbBtn" title="Upload image">📎</button>
+            <input className="cin" id="ci" placeholder="Ask me: Who drains you? Who energizes you? What happened last week..." />
+            <button className="sbtn" id="sb" title="Send">➤</button>
           </div>
           <input type="file" id="fileInput" accept="image/*" multiple style={{ display: 'none' }} />
         </div>
@@ -98,7 +98,7 @@ export default function AISommelier({ embedded = false }) {
         <div className="zone zone-lr" id="zoneLr">
           <canvas id="srcCanvas"></canvas>
         </div>
-        <div className="rh">溯源 · <b>INSIGHTS</b></div>
+        <div className="rh">Source · <b>INSIGHTS</b></div>
         <div className="src-tip" id="srcTip"></div>
       </div>
 

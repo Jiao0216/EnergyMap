@@ -124,12 +124,10 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
       },
       output: {
-        // Split heavy 3D libs into their own chunks. Safe now that `dedupe`
-        // guarantees only one three.js exists across all chunks.
-        manualChunks: {
-          three: ['three'],
-          'force-graph': ['3d-force-graph'],
-          react: ['react', 'react-dom'],
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) return 'three';
+          if (id.includes('node_modules/3d-force-graph')) return 'force-graph';
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'react';
         },
       },
     },
