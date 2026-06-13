@@ -628,12 +628,20 @@ function saveUserData(){
 function migrateCategoriesToEnglish(){
   var CN_CAT_NAMES={'朋友':'friend','同事':'colleague','家人':'family','恋人':'partner','泛泛之交':'acquaintance'};
   var CN_TAX_NAMES={'关系类型':'social','社交':'social'};
+  var CN_TO_EN_DISPLAY={'朋友':'Friend','同事':'Colleague','家人':'Family','恋人':'Partner','泛泛之交':'Acquaintance','关系类型':'Relationship Types','社交':'Social'};
   var changed=false;
   Object.keys(CN_CAT_NAMES).forEach(function(cn){
     var key=CN_CAT_NAMES[cn];
     if(CATEGORIES[key]&&CATEGORIES[key].name===cn){
       CATEGORIES[key].name=DEFAULT_CATEGORIES[key].name;
       if(DEFAULT_CATEGORIES[key].icon)CATEGORIES[key].icon=DEFAULT_CATEGORIES[key].icon;
+      changed=true;
+    }
+  });
+  Object.keys(CATEGORIES).forEach(function(key){
+    var display=CATEGORIES[key].name;
+    if(CN_TO_EN_DISPLAY[display]){
+      CATEGORIES[key].name=CN_TO_EN_DISPLAY[display];
       changed=true;
     }
   });
@@ -644,113 +652,12 @@ function migrateCategoriesToEnglish(){
       changed=true;
     }
   });
-  if(changed)saveUserData();
-}
-
-// Migrate legacy Chinese interaction records (names, tags, notes) → English
-function migrateNotesToEnglish(){
-  var CN_TAGS={
-    '充电':'Recharged','愉快':'Happy','放松':'Relaxed','焦虑':'Anxious','疲惫':'Drained',
-    '压力':'Stressed','温暖':'Warm','尴尬':'Awkward','无聊':'Bored','启发':'Inspired',
-    '感动':'Touched','烦躁':'Irritated','充实':'Fulfilled','低落':'Low','兴奋':'Excited',
-    '平静':'Calm','紧张':'Nervous','快乐':'Joyful','治愈':'Healing','消耗':'Depleting',
-    '正能量':'Positive','负能量':'Negative','开心':'Happy','累':'Tired','舒服':'Comfortable'
-  };
-  var CN_NAMES={
-    '同学':'Classmates','同事们':'Colleagues','同事':'Colleague','家人':'Family',
-    '朋友':'Friends','老板':'Boss','妈妈':'Mom','爸爸':'Dad','恋人':'Partner','室友':'Roommate'
-  };
-  var CN_NOTE_PHRASES=[
-    ['和同学去爬山','Went hiking with classmates'],
-    ['和同事吃饭','Had dinner with colleagues'],
-    ['和家人团聚','Reunited with family'],
-    ['和朋友聚会','Hung out with friends'],
-    ['去爬山','Went hiking'],
-    ['一起吃饭','Had a meal together'],
-    ['聊天','Had a conversation'],
-    ['开会','Had a meeting']
-  ];
-  function translateTags(tags){
-    if(!Array.isArray(tags))return tags;
-    return tags.map(function(t){return CN_TAGS[t]||t;});
-  }
-  function translateNoteText(text){
-    if(!text||typeof text!=='string')return text;
-    var out=text;
-    CN_NOTE_PHRASES.forEach(function(pair){out=out.split(pair[0]).join(pair[1]);});
-    return out;
-  }
-  function migrateOne(rec){
-    var changed=false;
-    if(rec.name&&CN_NAMES[rec.name]){rec.name=CN_NAMES[rec.name];changed=true;}
-    if(Array.isArray(rec.tags)){
-      var newTags=translateTags(rec.tags);
-      if(JSON.stringify(newTags)!==JSON.stringify(rec.tags)){rec.tags=newTags;changed=true;}
+  Object.keys(TAXONOMY).forEach(function(gk){
+    var display=TAXONOMY[gk].name;
+    if(CN_TO_EN_DISPLAY[display]){
+      TAXONOMY[gk].name=CN_TO_EN_DISPLAY[display];
+      changed=true;
     }
-    if(rec.note){
-      var newNote=translateNoteText(rec.note);
-      if(newNote!==rec.note){rec.note=newNote;changed=true;}
-    }
-    return changed;
-  }
-  var changed=false;
-  notes.forEach(function(n){
-    if(migrateOne(n))changed=true;
-    (n.visits||[]).forEach(function(v){if(migrateOne(v))changed=true;});
-  });
-  if(changed)saveUserData();
-}
-
-// Migrate legacy Chinese interaction records (names, tags, notes) → English
-function migrateNotesToEnglish(){
-  var CN_TAGS={
-    '充电':'Recharged','愉快':'Happy','放松':'Relaxed','焦虑':'Anxious','疲惫':'Drained',
-    '压力':'Stressed','温暖':'Warm','尴尬':'Awkward','无聊':'Bored','启发':'Inspired',
-    '感动':'Touched','烦躁':'Irritated','充实':'Fulfilled','低落':'Low','兴奋':'Excited',
-    '平静':'Calm','紧张':'Nervous','快乐':'Joyful','治愈':'Healing','消耗':'Depleting',
-    '正能量':'Positive','负能量':'Negative','开心':'Happy','累':'Tired','舒服':'Comfortable'
-  };
-  var CN_NAMES={
-    '同学':'Classmates','同事们':'Colleagues','同事':'Colleague','家人':'Family',
-    '朋友':'Friends','老板':'Boss','妈妈':'Mom','爸爸':'Dad','恋人':'Partner','室友':'Roommate'
-  };
-  var CN_NOTE_PHRASES=[
-    ['和同学去爬山','Went hiking with classmates'],
-    ['和同事吃饭','Had dinner with colleagues'],
-    ['和家人团聚','Reunited with family'],
-    ['和朋友聚会','Hung out with friends'],
-    ['去爬山','Went hiking'],
-    ['一起吃饭','Had a meal together'],
-    ['聊天','Had a conversation'],
-    ['开会','Had a meeting']
-  ];
-  function translateTags(tags){
-    if(!Array.isArray(tags))return tags;
-    return tags.map(function(t){return CN_TAGS[t]||t;});
-  }
-  function translateNoteText(text){
-    if(!text||typeof text!=='string')return text;
-    var out=text;
-    CN_NOTE_PHRASES.forEach(function(pair){out=out.split(pair[0]).join(pair[1]);});
-    return out;
-  }
-  function migrateOne(rec){
-    var changed=false;
-    if(rec.name&&CN_NAMES[rec.name]){rec.name=CN_NAMES[rec.name];changed=true;}
-    if(Array.isArray(rec.tags)){
-      var newTags=translateTags(rec.tags);
-      if(JSON.stringify(newTags)!==JSON.stringify(rec.tags)){rec.tags=newTags;changed=true;}
-    }
-    if(rec.note){
-      var newNote=translateNoteText(rec.note);
-      if(newNote!==rec.note){rec.note=newNote;changed=true;}
-    }
-    return changed;
-  }
-  var changed=false;
-  notes.forEach(function(n){
-    if(migrateOne(n))changed=true;
-    (n.visits||[]).forEach(function(v){if(migrateOne(v))changed=true;});
   });
   if(changed)saveUserData();
 }

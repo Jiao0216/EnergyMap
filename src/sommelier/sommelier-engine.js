@@ -2887,7 +2887,7 @@ function buildAINewCard(reply,data,imgs){
   }
 
   const score=_normalizeScoreUI(data.score);
-  const tagsStr=(data.tags||[]).join('、');
+  const tagsStr=(data.tags||[]).join(', ');
 
   return `${reply?_esc(reply)+'<br>':''}<div class="pc" data-card-id="${cardId}">`+
     `<h4>⚡ New Interaction · Edit & Save</h4>`+
@@ -2914,7 +2914,7 @@ function buildAIRevisitCard(reply,matchedId,data,imgs){
   const matched=notes.find(n=>n.id===matchedId);
   const matchedName=matched?matched.name:'Existing record';
   const score=_normalizeScoreUI(data.score);
-  const tagsStr=(data.tags||[]).join('、');
+  const tagsStr=(data.tags||[]).join(', ');
 
   return `${reply?_esc(reply)+'<br>':''}<div class="pc" data-card-id="${cardId}">`+
     `<h4>🔁 Follow-up · ${_esc(matchedName)}</h4>`+

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 /* Scoped to .sommelier-root so sommelier variables don't override main app's :root */
 .sommelier-root{
   --bg:#060610;--panel:#0a0a18;--border:#14142a;--text:#e0e0e8;--sub:#6a6a8e;--accent:#64ffda;
@@ -7,7 +7,7 @@
   --dR:0.6;       /* Right divider: bottom intercept at 60% of W along screen bottom */
 }
 /* Standalone root: fills viewport */
-.sommelier-root{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;position:relative}
+.sommelier-root{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;position:relative}
 /* Embedded root: fills parent container */
 .sommelier-root.sommelier-embedded{height:100%;width:100%;position:absolute;inset:0}
 /* Top bar — only in standalone mode */
