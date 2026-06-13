@@ -304,7 +304,7 @@ function updateUserBadge(){
 
 function logout(){
   currentUser=null;
-  try{localStorage.removeItem('tv_session');}catch(e){}
+  try{localStorage.removeItem('tv_session');localStorage.removeItem('em_session');}catch(e){}
   showLoginScreen();
   // Reset login form
   document.getElementById('login-email').value='';
@@ -434,7 +434,7 @@ function logout(){
         }
         // Login success
         currentUser={email:_verifyEmail};
-        try{localStorage.setItem('tv_session',JSON.stringify(currentUser));}catch(e){}
+        try{localStorage.setItem('tv_session',JSON.stringify(currentUser));localStorage.setItem('em_session',JSON.stringify(currentUser));}catch(e){}
         msg.textContent='登录成功！';msg.className='login-msg success';
         setTimeout(function(){
           hideLoginScreen();
@@ -511,9 +511,9 @@ function showProfile(){
     +'<div class="profile-field"><label>生日</label><input type="date" id="pf-birthday" value="'+(p.birthday||'')+'"></div>'
     +'<div class="profile-field"><label>个性签名</label><input type="text" id="pf-bio" placeholder="用一句话描述你的味觉偏好" value="'+(p.bio||'').replace(/"/g,'&quot;')+'"></div>'
     +'<div class="profile-stats">'
-      +'<div class="profile-stat"><div class="ps-num">'+totalNotes+'</div><div class="ps-label">品鉴</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+totalNotes+'</div><div class="ps-label">互动</div></div>'
       +'<div class="profile-stat"><div class="ps-num">'+totalVisits+'</div><div class="ps-label">总次数</div></div>'
-      +'<div class="profile-stat"><div class="ps-num">'+avgScore+'</div><div class="ps-label">均分</div></div>'
+      +'<div class="profile-stat"><div class="ps-num">'+(parseFloat(avgScore)>0?'+':'')+avgScore+'</div><div class="ps-label">平均能量</div></div>'
     +'</div>'
     +'<div class="profile-stats" style="grid-template-columns:1fr 1fr;margin-top:0">'
       +'<div class="profile-stat"><div class="ps-num">'+catCount+'</div><div class="ps-label">品类</div></div>'
@@ -599,16 +599,14 @@ var USER_ID='flavortrace_user_001';
 
 // ── DEFAULT DATA (5 core categories for new users) ──
 var DEFAULT_TAXONOMY={
-  drinks:{name:'饮品',children:['coffee','tea','wine']},
-  food:{name:'美食',children:['chinese','dessert']},
-  other:{name:'其他',children:[]}
+  social:{name:'关系类型',children:['friend','colleague','family','partner','acquaintance']}
 };
 var DEFAULT_CATEGORIES={
-  coffee:{name:'咖啡',icon:'☕',color:'#D4956A',parent:'drinks'},
-  tea:{name:'茶',icon:'🍵',color:'#5EBE8E',parent:'drinks'},
-  wine:{name:'葡萄酒',icon:'🍷',color:'#C85068',parent:'drinks'},
-  chinese:{name:'中餐',icon:'🥢',color:'#E86848',parent:'food'},
-  dessert:{name:'甜品',icon:'🍰',color:'#E8A0C0',parent:'food'}
+  friend:{name:'朋友',icon:'👫',color:'#F0A040',parent:'social'},
+  colleague:{name:'同事',icon:'💼',color:'#5090E0',parent:'social'},
+  family:{name:'家人',icon:'👨‍👩‍👧',color:'#A060D0',parent:'social'},
+  partner:{name:'恋人',icon:'💕',color:'#E05080',parent:'social'},
+  acquaintance:{name:'泛泛之交',icon:'🤝',color:'#50B090',parent:'social'}
 };
 
 var TAXONOMY,CATEGORIES;
@@ -639,7 +637,18 @@ function loadUserData(){
       notes=JSON.parse(savedNotes);
       TAXONOMY=JSON.parse(savedTax);
       CATEGORIES=JSON.parse(savedCats);
-      console.log('[TasteVerse] Loaded '+notes.length+' notes for '+email);
+      // Detect stale TasteVerse food categories and reset to EnergyMap relationship types
+      var catKeys=Object.keys(CATEGORIES);
+      var OLD_FOOD_KEYS=['coffee','tea','wine','beer','spirits','cocktail','food','snack','other_drinks','other_food'];
+      var hasOldData=catKeys.some(function(k){return OLD_FOOD_KEYS.indexOf(k)>=0;});
+      if(hasOldData){
+        console.log('[EnergyMap] Detected old TasteVerse data — resetting to relationship categories');
+        TAXONOMY=deepClone(DEFAULT_TAXONOMY);
+        CATEGORIES=deepClone(DEFAULT_CATEGORIES);
+        notes=[];
+        saveUserData();
+      }
+      console.log('[EnergyMap] Loaded '+notes.length+' interactions for '+email);
     }else{
       // New user — give defaults, no demo notes
       TAXONOMY=deepClone(DEFAULT_TAXONOMY);
@@ -648,13 +657,27 @@ function loadUserData(){
       saveUserData();
       // Set join date for new users
       try{var pr=getProfile();if(!pr.joinDate){pr.joinDate=new Date().toISOString().split('T')[0];saveProfile(pr);}}catch(e){}
-      console.log('[TasteVerse] New user: '+email+' — initialized with 5 default categories');
+      console.log('[EnergyMap] New user: '+email+' — initialized with 5 relationship types');
     }
   }catch(e){
     console.warn('[TasteVerse] Load failed, using defaults:',e);
     TAXONOMY=deepClone(DEFAULT_TAXONOMY);
     CATEGORIES=deepClone(DEFAULT_CATEGORIES);
     notes=[];
+  }
+}
+
+// ── ENERGY COLOR — maps -5~+5 energy score to red (positive) / blue (negative) ──
+function energyColor(score){
+  score=Math.max(-5,Math.min(5,score||0));
+  if(score>=0){
+    var t=score/5;
+    // 0 → gray #808080, +5 → hot red #FF3030
+    return mixHex('#808080','#FF3030',t);
+  }else{
+    var t2=-score/5;
+    // 0 → gray #808080, -5 → cool blue #3080FF
+    return mixHex('#808080','#3080FF',t2);
   }
 }
 
@@ -735,8 +758,7 @@ function calRender(){
       var shown=Math.min(dayNotes.length,4);
       for(var di=0;di<shown;di++){
         var dot=document.createElement('div');dot.className='cal-dot';
-        var cat=CATEGORIES[dayNotes[di].cat];
-        dot.style.background=cat?cat.color:'var(--accent)';
+        dot.style.background=energyColor(dayNotes[di].score||0);
         dotsDiv.appendChild(dot);
       }
       el.appendChild(document.createTextNode(d));
@@ -768,7 +790,7 @@ function calShowDay(day,dayNotes){
     html+='<div class="cal-note-item" data-note-id="'+n.id+'">'
       +'<div class="cni-top"><div class="cni-dot" style="background:'+cat.color+'"></div>'
       +'<span class="cni-name">'+cat.icon+' '+escapeHtml(n.name)+'</span>'
-      +'<span class="cni-score" style="color:'+cat.color+'">'+n.score+'</span></div>'
+      +'<span class="cni-score" style="color:'+energyColor(n.score)+'">'+(n.score>0?'+':'')+n.score+'</span></div>'
       +'<div class="cni-cat">'+cat.name+'</div>';
     if(n.tags&&n.tags.length){
       html+='<div class="cni-tags">';
@@ -802,8 +824,9 @@ function calBuildMiniGraph(dayNotes){
   dayNotes.forEach(function(n){
     var c=CATEGORIES[n.cat]||{color:'#888',name:n.cat,icon:'📝'};
     var vc=(n.visits?n.visits.length:0)+1;
-    gNodes.push({id:n.id,name:n.name,cat:n.cat,catName:c.name,catIcon:c.icon,color:c.color,
-      val:3+n.score*0.5+(Math.log(vc)/Math.log(1.5))*3,score:n.score,note:n.note,tags:n.tags,time:n.time,visits:vc,_noteRef:n});
+    var eColor2=energyColor(n.score);
+    gNodes.push({id:n.id,name:n.name,cat:n.cat,catName:c.name,catIcon:c.icon,color:eColor2,
+      val:3+Math.abs(n.score||0)*0.8+(Math.log(vc)/Math.log(1.5))*3,score:n.score,note:n.note,tags:n.tags,time:n.time,visits:vc,_noteRef:n});
   });
 
   // Same-category links with similarity
@@ -899,7 +922,7 @@ function calBuildMiniGraph(dayNotes){
       return '<div style="background:rgba(5,5,15,0.95);padding:10px 14px;border-radius:8px;border:1px solid '+n.color+'30;max-width:220px;font-family:Inter,sans-serif">'
         +'<div style="font-size:9px;color:'+n.color+';font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">'+escapeHtml(n.catIcon||'')+' '+escapeHtml(n.catName||'')+'</div>'
         +'<div style="font-size:13px;font-weight:700;color:#e8e8f0;margin-bottom:3px">'+escapeHtml(n.name)+'</div>'
-        +'<div style="font-size:20px;font-weight:800;color:'+n.color+'">'+n.score+'<span style="font-size:10px;opacity:0.4">/10</span></div></div>';
+        +'<div style="font-size:20px;font-weight:800;color:'+n.color+'">'+(n.score>0?'+':'')+n.score+'<span style="font-size:10px;opacity:0.4"> 能量</span></div></div>';
     })
     .nodeThreeObject(function(n){
       var grp=new T.Group();
@@ -1200,7 +1223,7 @@ function populateCatSelects(){
     g.children.forEach(function(ck){var c=CATEGORIES[ck];if(!c)return;var o=document.createElement('option');o.value=ck;o.textContent=c.icon+' '+c.name;og.appendChild(o);});
     if(og.children.length)sel.appendChild(og);
   });
-  var co=document.createElement('option');co.value='__custom__';co.textContent='+ 自定义品类';sel.appendChild(co);
+  var co=document.createElement('option');co.value='__custom__';co.textContent='+ 自定义关系类型';sel.appendChild(co);
   sel.onchange=function(){
     var isC=sel.value==='__custom__';
     document.getElementById('custom-cat-group').style.display=isC?'block':'none';
@@ -1212,7 +1235,8 @@ populateCatSelects();
 
 // ── SCORE / TAGS ────────────────────────────────
 var scoreRow=document.getElementById('score-row');
-for(var i=1;i<=10;i++){(function(i){var b=document.createElement('div');b.className='score-btn';b.textContent=i;b.onclick=function(){selectedScore=i;scoreRow.querySelectorAll('.score-btn').forEach(function(s){s.classList.remove('sel');});b.classList.add('sel');};scoreRow.appendChild(b);})(i);}
+selectedScore=0;
+for(var i=-5;i<=5;i++){(function(i){var b=document.createElement('div');b.className='score-btn';b.textContent=(i>0?'+':'')+i;b.style.color=i>0?'#F0A040':i<0?'#4080E0':'#8090A0';if(i===0){b.classList.add('sel');}b.onclick=function(){selectedScore=i;scoreRow.querySelectorAll('.score-btn').forEach(function(s){s.classList.remove('sel');});b.classList.add('sel');};scoreRow.appendChild(b);})(i);}
 var tagInput=document.getElementById('tag-input'),tagsRow=document.getElementById('tags-row');
 tagInput.onkeydown=function(e){if(e.key==='Enter'&&tagInput.value.trim()){e.preventDefault();var v=tagInput.value.trim();if(userTags.indexOf(v)<0){userTags.push(v);var t=document.createElement('div');t.className='tag rm';t.textContent=v;t.onclick=function(){userTags=userTags.filter(function(x){return x!==v;});t.remove();};tagsRow.insertBefore(t,tagInput);}tagInput.value='';}};
 
@@ -1291,17 +1315,16 @@ document.getElementById('btn-locate').onclick=function(){
 
 document.getElementById('btn-save').onclick=function(){
   var cat=document.getElementById('rec-cat').value;
-  if(cat==='__custom__'){var cn=document.getElementById('rec-custom-cat').value.trim();if(!cn){alert('请输入品类名');return;}var ci=document.getElementById('rec-custom-icon').value.trim()||'📝';var pc=document.getElementById('rec-parent-cat').value;cat='custom_'+Date.now();CATEGORIES[cat]={name:cn,icon:ci,color:'#'+Math.floor(Math.random()*0x999999+0x333333).toString(16),parent:pc};TAXONOMY[pc].children.push(cat);populateCatSelects();}
-  var name=document.getElementById('rec-name').value.trim();if(!name){alert('请输入名称');return;}
+  if(cat==='__custom__'){var cn=document.getElementById('rec-custom-cat').value.trim();if(!cn){alert('请输入关系类型名称');return;}var ci=document.getElementById('rec-custom-icon').value.trim()||'👥';var pc=document.getElementById('rec-parent-cat').value||'social';if(!TAXONOMY[pc])pc='social';cat='custom_'+Date.now();CATEGORIES[cat]={name:cn,icon:ci,color:'#'+Math.floor(Math.random()*0x999999+0x333333).toString(16),parent:pc};TAXONOMY[pc].children.push(cat);populateCatSelects();}
+  var name=document.getElementById('rec-name').value.trim();if(!name){alert('请输入人名');return;}
   var loc=document.getElementById('rec-location').value.trim();
-  var priceData=getPriceData();
-  var noteObj={id:'n'+Date.now(),cat:cat,name:name,score:selectedScore,tags:userTags.slice(),note:document.getElementById('rec-notes').value.trim(),time:new Date().toISOString().split('T')[0],location:loc||'',photo:uploadedPhotoData||''};
-  if(priceData)noteObj.price=priceData;
+  var durEl=document.getElementById('rec-duration');var duration=durEl?parseInt(durEl.value)||0:0;
+  var noteObj={id:'n'+Date.now(),cat:cat,name:name,score:selectedScore,tags:userTags.slice(),note:document.getElementById('rec-notes').value.trim(),time:new Date().toISOString().split('T')[0],location:loc||'',duration_min:duration||null,photo:uploadedPhotoData||''};
   notes.push(noteObj);
-  document.getElementById('rec-name').value='';document.getElementById('rec-notes').value='';document.getElementById('rec-location').value='';selectedScore=0;userTags=[];uploadedPhotoData=null;
+  document.getElementById('rec-name').value='';document.getElementById('rec-notes').value='';document.getElementById('rec-location').value='';if(durEl)durEl.value='';selectedScore=0;userTags=[];uploadedPhotoData=null;
   resetPriceFields();
   photoPreview.style.display='none';recPhoto.value='';
-  scoreRow.querySelectorAll('.score-btn').forEach(function(s){s.classList.remove('sel');});tagsRow.querySelectorAll('.tag').forEach(function(t){t.remove();});
+  scoreRow.querySelectorAll('.score-btn').forEach(function(s){s.classList.remove('sel');});scoreRow.querySelector('[data-zero]')||scoreRow.querySelectorAll('.score-btn')[5]&&scoreRow.querySelectorAll('.score-btn')[5].classList.add('sel');tagsRow.querySelectorAll('.tag').forEach(function(t){t.remove();});
   saveUserData();sendToEverOS(notes[notes.length-1]);refreshGraph();document.querySelector('[data-view="universe-view"]').click();
 };
 
@@ -1393,22 +1416,19 @@ var EverOS=(function(){
   function formatMemoryContent(note){
     var cat=CATEGORIES[note.cat]||{name:note.cat,icon:'📝'};
     var parts=[];
-    parts.push('品鉴记录：'+note.name);
-    parts.push('品类：'+cat.icon+' '+cat.name);
-    parts.push('评分：'+note.score+'/10');
-    if(note.tags&&note.tags.length)parts.push('风味标签：'+note.tags.join('、'));
-    if(note.note)parts.push('品鉴笔记：'+note.note);
-    if(note.price){
-      if(note.price.type==='avg')parts.push('人均价格：¥'+note.price.price);
-      else parts.push('价格：¥'+note.price.price);
-    }
+    parts.push('互动对象：'+note.name);
+    parts.push('关系类型：'+cat.icon+' '+cat.name);
+    parts.push('能量值：'+(note.score>0?'+':'')+note.score+'（-5耗尽～+5充满）');
+    if(note.duration_min)parts.push('时长：'+note.duration_min+'分钟');
+    if(note.tags&&note.tags.length)parts.push('情绪标签：'+note.tags.join('、'));
+    if(note.note)parts.push('活动内容：'+note.note);
     if(note.location)parts.push('地点：'+note.location);
     parts.push('日期：'+note.time);
     if(note.visits&&note.visits.length){
-      parts.push('品鉴次数：'+(note.visits.length+1)+'次');
+      parts.push('互动次数：'+(note.visits.length+1)+'次');
       note.visits.forEach(function(v,i){
-        var vp='第'+(i+2)+'次（'+v.time+'）：'+v.score+'/10';
-        if(v.tags&&v.tags.length)vp+=' 风味：'+v.tags.join('、');
+        var vp='第'+(i+2)+'次（'+v.time+'）：能量'+(v.score>0?'+':'')+v.score;
+        if(v.tags&&v.tags.length)vp+=' 情绪：'+v.tags.join('、');
         if(v.note)vp+=' '+v.note;
         parts.push(vp);
       });
@@ -1689,11 +1709,12 @@ function highlightMatch(text,q){
 }
 
 function createGradientLineObject(T,link){
-  var points=link._crossLink?20:(link._tagLink?32:14);
+  var abs=Math.abs(link._score||0);
+  var points=20;
   var positions=new Float32Array(points*3);
   var colors=new Float32Array(points*3);
-  var startColor=hexRgb(link._sourceColor||'#7b86a8');
-  var endColor=hexRgb(link._targetColor||link._sourceColor||'#7b86a8');
+  var startColor=hexRgb(link._sourceColor||'#ffffff');
+  var endColor=hexRgb(link._targetColor||'#888888');
   for(var i=0;i<points;i++){
     var t=points===1?0:i/(points-1);
     colors[i*3]=(startColor[0]+(endColor[0]-startColor[0])*t)/255;
@@ -1703,10 +1724,11 @@ function createGradientLineObject(T,link){
   var geo=new T.BufferGeometry();
   geo.setAttribute('position',new T.BufferAttribute(positions,3));
   geo.setAttribute('color',new T.BufferAttribute(colors,3));
+  var baseOp=0.12+abs*0.07;
   var mat=new T.LineBasicMaterial({
     vertexColors:true,
     transparent:true,
-    opacity:link._catLink?(0.3+(link._sim||0)*0.4):(link._tagLink?0.52:0.26),
+    opacity:baseOp,
     blending:T.AdditiveBlending,
     depthWrite:false
   });
@@ -1714,9 +1736,9 @@ function createGradientLineObject(T,link){
   line.renderOrder=2;
   line.userData={
     pointCount:points,
-    curveAmp:link._crossLink?0.08:(link._tagLink?0.16:0.05),
+    curveAmp:0,
     linkRef:link,
-    baseOpacity:link._catLink?(0.3+(link._sim||0)*0.4):(link._tagLink?0.52:0.26)
+    baseOpacity:baseOp
   };
   return line;
 }
@@ -1825,7 +1847,7 @@ function noteSimilarity(a,b){
   var allNoteB=b.note||'';(b.visits||[]).forEach(function(v){if(v.note)allNoteB+=' '+v.note;});
   var nkA=_extractNoteKeywords(allNoteA),nkB=_extractNoteKeywords(allNoteB);
   if(nkA.length>0&&nkB.length>0){score+=Math.min(1,_countSharedKeywords(nkA,nkB)/(Math.max(nkA.length,nkB.length)||1))*0.30;}
-  score+=(1-Math.abs((a.score||5)-(b.score||5))/10)*0.10;
+  score+=(1-Math.abs((a.score||0)-(b.score||0))/10)*0.10;
   return Math.min(1,Math.max(0,score));
 }
 
@@ -1834,85 +1856,28 @@ function noteSimilarity(a,b){
 // ============================================================
 function buildGraphData(){
   var gN=[],gL=[];
-  Object.keys(TAXONOMY).forEach(function(gk){gN.push({id:'__g_'+gk,_hidden:true});});
-  Object.keys(CATEGORIES).forEach(function(ck){
-    gN.push({id:'__c_'+ck,_hidden:true,_catKey:ck});
-    gL.push({source:'__c_'+ck,target:'__g_'+CATEGORIES[ck].parent,_hidden:true});
-  });
+
+  // Central "self" node — always at origin
+  gN.push({id:'__self__',name:'我',_isSelf:true,color:'#FFFFFF',val:28,score:0,
+    catIcon:'⚡',catName:'自己',tags:[],note:'',visits:1});
+
   notes.forEach(function(n){
     var c=CATEGORIES[n.cat]||{color:'#888',name:n.cat,icon:'📝'};
-    var vc=(n.visits?n.visits.length:0)+1; // visit count (1=first tasting + visits)
-    gN.push({id:n.id,name:n.name,cat:n.cat,catName:c.name,catIcon:c.icon,color:c.color,
-      val:3+n.score*0.5+(Math.log(vc)/Math.log(1.5))*3,score:n.score,note:n.note,tags:n.tags,time:n.time,visits:vc,price:n.price,_noteRef:n});
-    gL.push({source:n.id,target:'__c_'+n.cat,_hidden:true});
-  });
+    var vc=(n.visits?n.visits.length:0)+1;
+    var eColor=energyColor(n.score);
+    gN.push({id:n.id,name:n.name,cat:n.cat,catName:c.name,catIcon:c.icon,color:eColor,
+      val:3+Math.abs(n.score||0)*0.8+(Math.log(vc)/Math.log(1.5))*3,score:n.score,note:n.note,tags:n.tags,time:n.time,visits:vc,price:n.price,_noteRef:n});
 
-  // Same-category links with intra-cluster sub-grouping
-  // Notes sharing keywords in name (store, origin, style) or tags cluster tighter
-  var byCat={};
-  notes.forEach(function(n){if(!byCat[n.cat])byCat[n.cat]=[];byCat[n.cat].push(n);});
-
-  // Similarity helpers now use top-level _extractTokens, _extractNoteKeywords, _countSharedKeywords, noteSimilarity
-
-  Object.keys(byCat).forEach(function(cat){
-    var arr=byCat[cat];
-    for(var i=0;i<arr.length;i++){
-      for(var j=i+1;j<arr.length;j++){
-        var sim=noteSimilarity(arr[i],arr[j]);
-        var catColor=colorForCategory(cat);
-        gL.push({
-          source:arr[i].id,
-          target:arr[j].id,
-          _hidden:false,
-          _catLink:true,
-          _catColor:catColor,
-          _sourceColor:catColor,
-          _targetColor:catColor,
-          _str:0.08,
-          _sim:sim  // 0=unrelated, 1=very similar
-        });
-      }
-    }
-  });
-
-  // Shared-tag links (cross-category)
-  for(var i=0;i<notes.length;i++){for(var j=i+1;j<notes.length;j++){
-    if(notes[i].cat===notes[j].cat)continue;
-    var shared=notes[i].tags.filter(function(t){return notes[j].tags.indexOf(t)>=0;});
-    if(shared.length>0){
-      var c1=colorForCategory(notes[i].cat);
-      var c2=colorForCategory(notes[j].cat);
-      gL.push({
-        source:notes[i].id,
-        target:notes[j].id,
-        _hidden:false,
-        _tagLink:true,
-        _sharedTags:shared,
-        _linkColor:mixHex(c1,c2,0.5),
-        _sourceColor:c1,
-        _targetColor:c2,
-        _str:shared.length*0.15
-      });
-    }
-  }}
-
-  // Cross-category links (same taxonomy group)
-  Object.keys(TAXONOMY).forEach(function(gk){
-    var ch=TAXONOMY[gk].children.filter(function(c){return byCat[c]&&byCat[c].length;});
-    for(var a=0;a<ch.length;a++){
-      for(var b=a+1;b<ch.length;b++){
-        var na=byCat[ch[a]][0],nb=byCat[ch[b]][0];
-        if(na&&nb)gL.push({
-          source:na.id,
-          target:nb.id,
-          _hidden:false,
-          _crossLink:true,
-          _sourceColor:colorForCategory(ch[a]),
-          _targetColor:colorForCategory(ch[b]),
-          _str:0.03
-        });
-      }
-    }
+    // Ego link: self → person, color gradient from white to energy color
+    gL.push({
+      source:'__self__',
+      target:n.id,
+      _hidden:false,
+      _egoLink:true,
+      _sourceColor:'#FFFFFF',
+      _targetColor:eColor,
+      _score:n.score
+    });
   });
 
   return {nodes:gN,links:gL};
@@ -1990,6 +1955,17 @@ function initGraph(){
       .nodeResolution(24)
       .nodeLabel(function(n){
         if(n._hidden)return '';
+        if(n._isSelf){
+          var totalEnergy=notes.reduce(function(s,nt){return s+(nt.score||0);},0);
+          var posCount=notes.filter(function(nt){return (nt.score||0)>0;}).length;
+          var negCount=notes.filter(function(nt){return (nt.score||0)<0;}).length;
+          return '<div style="background:rgba(5,5,15,0.95);padding:12px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.3);max-width:220px;font-family:Inter,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.5)">'
+            +'<div style="font-size:10px;color:#fff;font-weight:600;letter-spacing:1px;margin-bottom:4px">⚡ 这是你</div>'
+            +'<div style="font-size:12px;color:#ccc;line-height:1.6">'
+            +'🔴 充能互动：<b style="color:#FF3030">'+posCount+'</b> 次<br>'
+            +'🔵 耗能互动：<b style="color:#3080FF">'+negCount+'</b> 次<br>'
+            +'净能量：<b style="color:'+(totalEnergy>=0?'#FF3030':'#3080FF')+'">'+(totalEnergy>0?'+':'')+totalEnergy+'</b></div></div>';
+        }
         var q=graphSearchQuery;
         var noteText=(n.note||'').substring(0,80);
         var tagsText=(n.tags||[]).join(' · ');
@@ -1998,130 +1974,65 @@ function initGraph(){
           +'<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:5px">'+highlightMatch(n.name,q)+'</div>'
           +(tagsText?'<div style="font-size:10px;color:#9cc7ff;margin-bottom:5px;line-height:1.5">'+highlightMatch(tagsText,q)+'</div>':'')
           +'<div style="font-size:11px;color:#7878a0;line-height:1.4">'+highlightMatch(noteText,q)+'</div>'
-          +(n.price?'<div style="font-size:11px;color:#f0ba61;margin-top:4px">💰 ¥'+n.price.price+(n.price.type==='avg'?' 人均':'')+'</div>':'')
-          +'<div style="font-size:24px;font-weight:800;color:'+n.color+';margin-top:6px">'+n.score+'<span style="font-size:11px;opacity:0.4">/10</span>'+(n.visits>1?' <span style="font-size:11px;opacity:0.5;margin-left:6px">×'+n.visits+'</span>':'')+'</div></div>';
+          +'<div style="font-size:24px;font-weight:800;color:'+n.color+';margin-top:6px">'+(n.score>0?'+':'')+n.score+'<span style="font-size:11px;opacity:0.4"> 能量</span>'+(n.visits>1?' <span style="font-size:11px;opacity:0.5;margin-left:6px">×'+n.visits+'</span>':'')+'</div></div>';
       })
       .linkVisibility(function(l){return !l._hidden;})
       .linkLabel(function(l){
-        if(l._hidden)return '';
-        var sn=typeof l.source==='object'?l.source:null;
+        if(l._hidden||!l._egoLink)return '';
         var tn=typeof l.target==='object'?l.target:null;
-        var sName=sn?sn.name:'';var tName=tn?tn.name:'';
-        var sColor=sn?sn.color:'#888';var tColor=tn?tn.color:'#888';
-        var sCat=sn?(sn.catIcon||'')+' '+(sn.catName||''):'';
-        var tCat=tn?(tn.catIcon||'')+' '+(tn.catName||''):'';
-        var typeLabel='',reason='',dotColor='#888';
-        if(l._catLink){
-          typeLabel='同品类关联';dotColor=l._catColor||'#7fe0cf';
-          var sim=l._sim||0;var pct=Math.round(sim*100);
-          reason='相似度 <b>'+pct+'%</b>';
-          if(sim>0.3){
-            // explain what contributes to similarity
-            var parts=[];
-            if(sn&&tn&&sn._noteRef&&tn._noteRef){
-              var stA=(sn._noteRef.tags||[]),stB=(tn._noteRef.tags||[]);
-              var shared=stA.filter(function(t){return stB.indexOf(t)>=0;});
-              if(shared.length)parts.push('共享标签: '+shared.join('、'));
-              var tokA=_extractTokens(sn.name),tokB=_extractTokens(tn.name);
-              var nameSh=tokA.filter(function(t){return tokB.indexOf(t)>=0;});
-              if(nameSh.length)parts.push('名称相近: '+nameSh.join('、'));
-            }
-            if(parts.length)reason+='<br><span style="opacity:0.7">'+parts.join(' · ')+'</span>';
-          }
-        }else if(l._tagLink){
-          typeLabel='跨品类风味关联';dotColor=l._linkColor||'#af79ff';
-          reason='共享标签: <b>'+(l._sharedTags||[]).join('、')+'</b>';
-        }else if(l._crossLink){
-          typeLabel='品类族群关联';dotColor=mixHex(l._sourceColor||'#888',l._targetColor||'#888',0.5);
-          reason='属于同一大类（'+sCat.trim()+' ↔ '+tCat.trim()+'）';
-        }else{
-          return '';
-        }
-        return '<div style="background:rgba(5,5,15,0.95);padding:12px 16px;border-radius:10px;border:1px solid '+dotColor+'30;max-width:300px;font-family:Inter,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.5)">'
-          +'<div style="font-size:9px;color:'+dotColor+';font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">● '+typeLabel+'</div>'
-          +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px">'
-          +'<span style="font-size:12px;font-weight:600;color:'+sColor+'">'+escapeHtml(sName)+'</span>'
-          +'<span style="font-size:10px;color:#555">↔</span>'
-          +'<span style="font-size:12px;font-weight:600;color:'+tColor+'">'+escapeHtml(tName)+'</span>'
-          +'</div>'
-          +'<div style="font-size:11px;color:#99a7c7;line-height:1.6">'+reason+'</div>'
+        if(!tn)return '';
+        var score=l._score||0;
+        var eColor=l._targetColor||'#888';
+        var energyLabel=score>0?('充能 +'+score):(score<0?('耗能 '+score):'中性 0');
+        var tags=(tn.tags||[]).join('、');
+        return '<div style="background:rgba(5,5,15,0.95);padding:12px 16px;border-radius:10px;border:1px solid '+eColor+'40;max-width:260px;font-family:Inter,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.5)">'
+          +'<div style="font-size:10px;color:'+eColor+';font-weight:600;letter-spacing:1px;margin-bottom:4px">'+(score>0?'🔴':'🔵')+' 与我的关系</div>'
+          +'<div style="font-size:14px;font-weight:700;color:#e8e8f0;margin-bottom:6px">'+escapeHtml(tn.name||'')+'</div>'
+          +'<div style="font-size:20px;font-weight:800;color:'+eColor+'">'+energyLabel+'</div>'
+          +(tags?'<div style="font-size:10px;color:#9cc7ff;margin-top:6px">'+escapeHtml(tags)+'</div>':'')
           +'</div>';
       })
       .linkWidth(function(l){
+        if(l._hidden)return 0;
         var matched=linkIsEmphasized(l);
-        if(!graphSearchQuery&&!graphFocusedCategory){
-          if(l._crossLink)return 0.35;
-          if(l._catLink){var s=l._sim||0;return 0.2+s*0.45;}
-          if(l._tagLink)return 0.42;
-          return 0.28;
-        }
-        if(l._crossLink)return matched?0.8:0.12;
-        if(l._catLink){var s2=l._sim||0;return matched?(0.6+s2*0.5):(0.06+s2*0.08);}
-        if(l._tagLink)return matched?1.05:0.14;
-        return matched?0.7:0.1;
+        var abs=Math.abs(l._score||0);
+        var base=0.15+abs*0.12;
+        if(!graphSearchQuery&&!graphFocusedCategory)return base;
+        return matched?(base*2.5):(base*0.15);
       })
       .linkOpacity(function(l){
+        if(l._hidden)return 0;
         var matched=linkIsEmphasized(l);
-        if(!graphSearchQuery&&!graphFocusedCategory){
-          if(l._crossLink)return 0.28;
-          if(l._catLink){var s=l._sim||0;return 0.12+s*0.28;}
-          if(l._tagLink)return 0.32;
-          return 0.22;
-        }
-        if(l._crossLink)return matched?0.55:0.04;
-        if(l._catLink){var s2=l._sim||0;return matched?(0.4+s2*0.35):(0.01+s2*0.02);}
-        if(l._tagLink)return matched?0.76:0.03;
-        return matched?0.48:0.02;
+        var abs=Math.abs(l._score||0);
+        var base=0.15+abs*0.07;
+        if(!graphSearchQuery&&!graphFocusedCategory)return base;
+        return matched?(base*2.2):(base*0.08);
       })
       .linkColor(function(l){
-        if(l._catLink)return l._catColor||'#6c7896';
-        if(l._crossLink)return mixHex(l._sourceColor||'#60708a',l._targetColor||'#8ea4c8',0.5);
-        if(l._tagLink&&l._linkColor)return l._linkColor;
-        return mixHex(l._sourceColor||'#60708a',l._targetColor||'#8ea4c8',0.5);
+        return mixHex(l._sourceColor||'#ffffff',l._targetColor||'#888888',0.5);
       })
-      .linkCurvature(function(l){
-        if(l._tagLink)return 0.14;
-        if(l._crossLink)return 0.06;
-        return 0.03;
-      })
-      .linkCurveRotation(function(l){
-        if(!l._tagLink)return 0;
-        var sid=typeof l.source==='object'?l.source.id:l.source;
-        var tid=typeof l.target==='object'?l.target.id:l.target;
-        var seed=(String(sid)+String(tid)).length;
-        return (seed%6)*(Math.PI/3);
-      })
+      .linkCurvature(0)
+      .linkCurveRotation(0)
       .linkDirectionalParticles(function(l){
+        if(l._hidden)return 0;
         var matched=linkIsEmphasized(l);
-        if(!graphSearchQuery&&!graphFocusedCategory){
-          if(l._catLink)return 3;
-          if(l._crossLink)return 3;
-          if(l._tagLink)return 3;
-          return 2;
-        }
-        if(l._catLink)return matched?5:2;
-        if(l._crossLink)return matched?6:2;
-        if(l._tagLink)return matched?7:1;
-        return matched?4:1;
+        var abs=Math.abs(l._score||0);
+        if(!graphSearchQuery&&!graphFocusedCategory)return abs>0?3:1;
+        return matched?(abs>0?6:3):1;
       })
       .linkDirectionalParticleWidth(function(l){
-        var matched=linkIsEmphasized(l);
-        if(l._catLink)return matched?3.5:2.5;
-        if(l._crossLink)return matched?3.5:2.5;
-        if(l._tagLink)return matched?3.8:2.2;
-        return matched?3.0:2.0;
+        var abs=Math.abs(l._score||0);
+        return 1.5+abs*0.25;
       })
       .linkDirectionalParticleSpeed(function(l){
-        if(l._catLink)return 0.002+Math.random()*0.003;
-        if(l._crossLink)return 0.002+Math.random()*0.003;
-        return 0.003+Math.random()*0.005;
+        var score=l._score||0;
+        // Positive: particles flow outward (self→person). Negative: reverse (person→self draining)
+        var abs=Math.abs(score);
+        var speed=0.002+abs*0.0015;
+        return score>=0?speed:-speed;
       })
       .linkDirectionalParticleColor(function(l){
-        // Mix heavily toward white so particles never appear as dark dots
-        if(l._catLink)return mixHex(l._catColor||'#7fe0cf','#ffffff',0.6);
-        if(l._crossLink)return mixHex(l._sourceColor||'#7fe0cf','#ffffff',0.6);
-        if(l._tagLink)return mixHex(l._linkColor||'#af79ff','#ffffff',0.5);
-        return '#ffffff';
+        return mixHex(l._targetColor||'#888','#ffffff',0.5);
       })
       .linkThreeObject(function(l){
         return createGradientLineObject(T,l);
@@ -2152,55 +2063,38 @@ function initGraph(){
         var charge=Graph.d3Force('charge');
         if(charge){
           charge.strength(function(nn){
-            if(nn.id&&nn.id.indexOf('__g_')===0)return -160;
-            if(nn.id&&nn.id.indexOf('__c_')===0)return -80;
-            return -35;
+            if(nn._isSelf)return -800; // self node repels everything strongly to stay at center
+            return -60;
           });
-          charge.distanceMax(250);
+          charge.distanceMax(400);
         }
+        // Pin self node at origin
         Graph.d3Force('center',null);
-        function centerForce(dim){
-          var str=0.025;
+        function pinSelfForce(){
+          var str=0.8;
           function force(alpha){
             var nodes=force._nodes||[];
             for(var i=0;i<nodes.length;i++){
               var n=nodes[i];
-              if(dim==='x'){n.vx-=n.x*str*alpha;}
-              else if(dim==='y'){n.vy-=n.y*str*alpha;}
-              else{n.vz=(n.vz||0)-((n.z||0)*str*alpha);}
+              if(n._isSelf){n.vx-=n.x*str;n.vy-=n.y*str;n.vz=(n.vz||0)-(n.z||0)*str;}
             }
           }
           force.initialize=function(nodes){force._nodes=nodes;};
-          force.strength=function(s){if(!arguments.length)return str;str=s;return force;};
           return force;
         }
-        Graph.d3Force('gravityX',centerForce('x'));
-        Graph.d3Force('gravityY',centerForce('y'));
-        Graph.d3Force('gravityZ',centerForce('z'));
+        Graph.d3Force('pinSelf',pinSelfForce());
 
         var lnk=Graph.d3Force('link');
         if(lnk){
           lnk.distance(function(ll){
-            if(ll._hidden){
-              var sid=typeof ll.source==='string'?ll.source:ll.source.id;
-              var tid=typeof ll.target==='string'?ll.target:ll.target.id;
-              if((sid.indexOf('__c_')===0&&tid.indexOf('__g_')===0)||(tid.indexOf('__c_')===0&&sid.indexOf('__g_')===0))return 35;
-              return 18;
-            }
-            if(ll._crossLink)return 75;
-            if(ll._catLink){var sim=ll._sim||0;return 32-sim*20;}
-            return 55;
+            if(!ll._egoLink)return 20;
+            var abs=Math.abs(ll._score||0);
+            // Higher absolute energy = closer to self (stronger bond)
+            return 120-abs*12;
           });
           lnk.strength(function(ll){
-            if(ll._hidden){
-              var sid=typeof ll.source==='string'?ll.source:(ll.source&&ll.source.id)||'';
-              var tid=typeof ll.target==='string'?ll.target:(ll.target&&ll.target.id)||'';
-              if((sid.indexOf('__c_')===0&&tid.indexOf('__g_')===0)||(tid.indexOf('__c_')===0&&sid.indexOf('__g_')===0))return 0.5;
-              return 0.7;
-            }
-            if(ll._crossLink)return 0.06;
-            if(ll._catLink){var sim=ll._sim||0;return 0.15+sim*0.4;}
-            return (ll._str||0.1)*1.1;
+            if(!ll._egoLink)return 0;
+            return 0.3;
           });
         }
       }catch(e){console.warn('[TasteVerse] Force cfg:',e);}
@@ -2348,6 +2242,41 @@ function initGraph(){
     Graph.nodeThreeObject(function(n){
       if(n._hidden){
         return new T.Mesh(new T.SphereGeometry(0.1,4,4),new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+      }
+      // Special "self" node — bright pulsing white sphere with strong glow
+      if(n._isSelf){
+        var selfGrp=new T.Group();
+        selfGrp.userData={baseScale:1,phase:0,speed:0.6,noteRef:n,_isSelf:true};
+        var sz=6;
+        var selfCore=new T.Mesh(
+          new T.SphereGeometry(sz,32,32),
+          new T.MeshPhongMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1.2,transparent:true,opacity:0.95})
+        );
+        selfGrp.add(selfCore);
+        // Inner bright center
+        selfGrp.add(new T.Mesh(new T.SphereGeometry(sz*0.45,12,12),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.9})));
+        // Glow halos
+        selfGrp.add(new T.Mesh(new T.SphereGeometry(sz*6,24,24),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.04,depthWrite:false,side:T.BackSide})));
+        selfGrp.add(new T.Mesh(new T.SphereGeometry(sz*3.5,22,22),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.1,depthWrite:false})));
+        // Pulsing ring
+        var selfRing=new T.Mesh(
+          new T.TorusGeometry(sz*2.8,sz*0.09,12,64),
+          new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.4,depthWrite:false})
+        );
+        selfRing.rotation.x=Math.PI/2;
+        selfGrp.add(selfRing);
+        // Canvas glow sprite
+        var scv=document.createElement('canvas');scv.width=128;scv.height=128;
+        var sctx=scv.getContext('2d');
+        var sg=sctx.createRadialGradient(64,64,0,64,64,64);
+        sg.addColorStop(0,'rgba(255,255,255,0.9)');sg.addColorStop(0.2,'rgba(255,255,255,0.5)');
+        sg.addColorStop(0.5,'rgba(255,255,255,0.12)');sg.addColorStop(1,'rgba(255,255,255,0)');
+        sctx.fillStyle=sg;sctx.fillRect(0,0,128,128);
+        var ssp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(scv),transparent:true,blending:T.AdditiveBlending,opacity:0.7,depthWrite:false}));
+        ssp.scale.set(sz*7,sz*7,1);
+        selfGrp.add(ssp);
+        _breathNodes.push(selfGrp);
+        return selfGrp;
       }
       var grp=new T.Group();
       grp.userData={baseScale:1,phase:Math.random()*Math.PI*2,speed:0.3+Math.random()*0.4,noteRef:n};
@@ -2536,14 +2465,16 @@ function initGraph(){
       requestAnimationFrame(breathe);
     })();
 
-    // Pulsing link particles speed
+    // Pulsing link particles speed — ego links: positive flows out, negative flows in
     Graph.linkDirectionalParticleSpeed(function(l){
+      if(l._hidden)return 0;
       var pulse=0.0015+Math.sin(_clock*0.9)*0.0012;
       var matched=linkIsEmphasized(l);
-      if(l._tagLink)return (matched?0.013:0.004)+Math.abs(pulse)*(matched?2.3:0.6)+Math.random()*(matched?0.003:0.001);
-      if(l._catLink)return (matched?0.009:0.003)+Math.abs(pulse)*(matched?1.3:0.4)+Math.random()*(matched?0.002:0.001);
-      if(l._crossLink)return (matched?0.008:0.0025)+Math.abs(pulse)*(matched?1.1:0.35)+Math.random()*(matched?0.002:0.001);
-      return (matched?0.009:0.003)+Math.abs(pulse)*(matched?1:0.35)+Math.random()*(matched?0.002:0.001);
+      var score=l._score||0;
+      var abs=Math.abs(score);
+      var base=(matched?0.009:0.003)+Math.abs(pulse)*(matched?1.3:0.4)+Math.random()*(matched?0.002:0.001);
+      var speed=base+abs*0.0015;
+      return score>=0?speed:-speed;
     });
 
     // Camera — auto-focus on data cluster center
@@ -2806,15 +2737,18 @@ function renderCategories(){
     var g=TAXONOMY[gk];var gc=g.children.filter(function(c){return CATEGORIES[c];});if(!gc.length)return;
     var h=document.createElement('div');h.style.cssText='grid-column:1/-1;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;padding:8px 0 0;margin-top:8px';h.textContent=g.name;grid.appendChild(h);
     gc.forEach(function(ck){
-      var c=CATEGORIES[ck];var cnt=counts[ck]||0;var avg=avgs[ck]?(avgs[ck].reduce(function(a,b){return a+b;},0)/avgs[ck].length).toFixed(1):'—';
+      var c=CATEGORIES[ck];var cnt=counts[ck]||0;
+      var avgEnergy=avgs[ck]?(avgs[ck].reduce(function(a,b){return a+b;},0)/avgs[ck].length):null;
+      var avgStr=avgEnergy!==null?(avgEnergy>0?'+':'')+avgEnergy.toFixed(1):'—';
+      var avgColor=avgEnergy!==null?energyColor(avgEnergy):c.color;
       var card=document.createElement('div');card.className='cat-card';
       card.innerHTML='<div class="cat-card-actions">'
         +'<button class="cat-action-btn edit" data-cat="'+ck+'" title="编辑">✎</button>'
         +'<button class="cat-action-btn del" data-cat="'+ck+'" title="删除">✕</button>'
         +'</div>'
         +'<div class="cat-icon" style="background:'+c.color+'15;border:1px solid '+c.color+'20">'+c.icon+'</div>'
-        +'<div class="ca" style="color:'+c.color+'">'+avg+'</div>'
-        +'<h4>'+c.name+'</h4><div class="cc">'+cnt+' 条记录</div>'
+        +'<div class="ca" style="color:'+avgColor+'">'+avgStr+'</div>'
+        +'<h4>'+c.name+'</h4><div class="cc">'+cnt+' 次互动</div>'
         +'<div class="cb"><div class="cf" style="width:'+(cnt/mx*100)+'%;background:'+c.color+'"></div></div>';
       card.onclick=function(e){
         if(e.target.classList.contains('cat-action-btn'))return;
@@ -2825,7 +2759,7 @@ function renderCategories(){
   });
   // Add new category card
   var add=document.createElement('div');add.className='cat-card';add.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:140px;border-style:dashed';
-  add.innerHTML='<div style="font-size:32px;color:var(--text3)">+</div><div style="font-size:12px;color:var(--text2);margin-top:4px">添加新品类</div>';
+  add.innerHTML='<div style="font-size:32px;color:var(--text3)">+</div><div style="font-size:12px;color:var(--text2);margin-top:4px">添加关系类型</div>';
   add.onclick=function(){switchView('record-view');};grid.appendChild(add);
 
   // Bind edit/delete buttons
@@ -2981,13 +2915,13 @@ function showDetail(note){
   if(visits.length>0){
     visitsHtml='<div class="dp-visits"><h4>品鉴记录 ×'+visitCount+'</h4>';
     // Show original tasting first
-    visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+cat.color+'">'+note.score+'</span><span style="opacity:0.4;font-size:10px">/10 · 初次品鉴 · '+note.time+(note.price?' · ¥'+note.price.price:'')+'</span></div>';
+    visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(note.score)+'">'+(note.score>0?'+':'')+note.score+'</span><span style="opacity:0.4;font-size:10px"> 能量 · 首次 · '+note.time+'</span></div>';
     if(note.tags.length)visitsHtml+='<div class="vi-tags">'+note.tags.map(function(t){return '<span class="vi-tag">'+t+'</span>';}).join('')+'</div>';
     if(note.note)visitsHtml+='<div style="margin-top:4px;font-size:11px;color:var(--text3)">'+note.note.substring(0,80)+(note.note.length>80?'...':'')+'</div>';
     visitsHtml+='</div>';
     // Show each re-tasting
     visits.forEach(function(v,i){
-      visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+cat.color+'">'+v.score+'</span><span style="opacity:0.4;font-size:10px">/10 · 第'+(i+2)+'次 · '+v.time+(v.price?' · ¥'+v.price.price:'')+'</span></div>';
+      visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(v.score)+'">'+(v.score>0?'+':'')+v.score+'</span><span style="opacity:0.4;font-size:10px"> 能量 · 第'+(i+2)+'次 · '+v.time+'</span></div>';
       if(v.tags&&v.tags.length)visitsHtml+='<div class="vi-tags">'+v.tags.map(function(t){return '<span class="vi-tag">'+t+'</span>';}).join('')+'</div>';
       if(v.note)visitsHtml+='<div style="margin-top:4px;font-size:11px;color:var(--text3)">'+v.note.substring(0,80)+(v.note.length>80?'...':'')+'</div>';
       if(v.photo)visitsHtml+='<div style="margin-top:6px;border-radius:6px;overflow:hidden;max-height:140px"><img src="'+v.photo+'" style="width:100%;display:block"></div>';
@@ -3003,17 +2937,17 @@ function showDetail(note){
   document.getElementById('detail-content').innerHTML=
     '<div class="dp-cat" style="color:'+cat.color+'">'+cat.icon+' '+cat.name+(visitCount>1?' <span style="font-size:9px;opacity:0.5;margin-left:4px">×'+visitCount+'</span>':'')+'</div>'
     +'<h3>'+note.name+'</h3>'
-    +'<div class="dp-sc" style="color:'+cat.color+'">'+latestScore+'<span style="font-size:16px;opacity:0.3">/10</span></div>'
+    +'<div class="dp-sc" style="color:'+energyColor(latestScore)+'">'+(latestScore>0?'+':'')+latestScore+'<span style="font-size:16px;opacity:0.3"> 能量</span></div>'
     +'<div class="dp-tg">'+latestTags.map(function(t){return '<span class="dp-t">'+t+'</span>';}).join('')+'</div>'
     +'<div class="dp-n">'+(visits.length>0&&visits[visits.length-1].note?visits[visits.length-1].note:note.note)+'</div>'
-    +priceHtml+locHtml+photoHtml
-    +'<div class="dp-time">📅 '+note.time+'</div>'
+    +locHtml+photoHtml
+    +'<div class="dp-time">📅 '+note.time+(note.duration_min?' · ⏱ '+note.duration_min+'分钟':'')+'</div>'
     +visitsHtml
-    +'<button class="btn-retaste" id="btn-retaste">＋ 再次品鉴</button>'
+    +'<button class="btn-retaste" id="btn-retaste">＋ 再次互动</button>'
     +'<div class="retaste-form" id="retaste-form">'
-      +'<label>评分</label><div class="rt-score-row" id="rt-score-row"></div>'
-      +'<label>风味标签</label><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px" id="rt-tags-row"><input type="text" id="rt-tag-input" placeholder="输入标签回车" style="flex:1;min-width:100px;padding:5px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;outline:none;font-family:inherit"></div>'
-      +'<label>品鉴笔记</label><textarea id="rt-notes" placeholder="这次的感受..."></textarea>'
+      +'<label>能量值（-5~+5）</label><div class="rt-score-row" id="rt-score-row"></div>'
+      +'<label>情绪标签</label><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px" id="rt-tags-row"><input type="text" id="rt-tag-input" placeholder="输入情绪标签回车" style="flex:1;min-width:100px;padding:5px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;outline:none;font-family:inherit"></div>'
+      +'<label>活动内容 &amp; 感受</label><textarea id="rt-notes" placeholder="这次的感受..."></textarea>'
       +'<label>本次价格 <span style="opacity:0.4;font-weight:400">（选填）</span></label>'
       +'<div class="price-wrap"><div class="price-mode-toggle" id="rt-price-mode-toggle"><span class="price-mode sel" data-mode="unit">单价</span><span class="price-mode" data-mode="avg">人均</span></div>'
       +'<div class="price-inputs"><div id="rt-price-unit-group" style="display:flex;align-items:center;gap:6px"><input type="number" id="rt-price" placeholder="0.00" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"><span style="font-size:11px;color:var(--text3)">元</span></div>'
@@ -3059,12 +2993,14 @@ function showDetail(note){
   var rtScore=0;
   var rtTags=[];
 
-  // Build score buttons
-  for(var s=1;s<=10;s++){
+  // Build score buttons (-5 to +5)
+  for(var s=-5;s<=5;s++){
     (function(sc){
       var btn=document.createElement('button');
       btn.className='rt-score-btn';
-      btn.textContent=sc;
+      btn.textContent=(sc>0?'+':'')+sc;
+      btn.style.color=sc>0?'#F0A040':sc<0?'#4080E0':'#8090A0';
+      if(sc===0)btn.classList.add('sel');
       btn.onclick=function(){
         rtScore=sc;
         rtScoreRow.querySelectorAll('.rt-score-btn').forEach(function(b){b.classList.remove('sel');});
@@ -3138,7 +3074,7 @@ function showDetail(note){
     rtForm.classList.remove('open');
   };
   document.getElementById('rt-save').onclick=function(){
-    if(!rtScore){alert('请选择评分');return;}
+    if(rtScore===undefined||rtScore===null){alert('请选择能量值');return;}
     if(!note.visits)note.visits=[];
     var rtPriceData=null;
     if(rtPriceMode==='unit'){
@@ -3283,7 +3219,7 @@ window.onresize=function(){if(Graph)Graph.width(window.innerWidth).height(window
 (function(){
   // Try to restore a previously authenticated session for this browser.
   var saved=null;
-  try{var raw=localStorage.getItem('tv_session');if(raw)saved=JSON.parse(raw);}catch(e){}
+  try{var raw=localStorage.getItem('tv_session')||localStorage.getItem('em_session');if(raw)saved=JSON.parse(raw);}catch(e){}
 
   if(saved&&saved.email){
     // Resume existing session: skip login, load that user's data.
@@ -3297,9 +3233,9 @@ window.onresize=function(){if(Graph)Graph.width(window.innerWidth).height(window
   }
 })();
 
-// ── Demo seed block (disabled — uncomment for local preview) ─────────────────
+// ── Demo seed block (disabled) ────────────────────────────────────────────────
 /* (function(){
-  currentUser={email:'demo@tasteverse.app'};
+  currentUser={email:'demo@energymap.app'};
   TAXONOMY=deepClone(DEFAULT_TAXONOMY);
   TAXONOMY.drinks.children.push('cocktail','whisky','sake');
   TAXONOMY.food.children.push('japanese','italian','bbq','hotpot');

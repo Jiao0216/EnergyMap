@@ -1,12 +1,13 @@
-// Vercel Serverless Function — AI tasting note parser via DeepSeek.
+// Vercel Serverless Function — AI tasting note parser via Nebius AI Studio.
 // Takes free-form text + user's existing notes, decides whether the user is
 // describing a NEW tasting or RE-TASTING an existing record, and extracts
 // structured data either way.
 //
 // Env vars required:
-//   DEEPSEEK_API_KEY
+//   NEBIUS_API_KEY
 
-const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
+const AI_URL = 'https://api.studio.nebius.ai/v1/chat/completions';
+const AI_MODEL = 'meta-llama/Llama-3.3-70B-Instruct';
 
 // In-memory rate limit (per session token / IP), 10 requests per minute
 const RATE_WINDOW_MS = 60 * 1000;
@@ -24,51 +25,51 @@ function checkRate(key) {
   return true;
 }
 
-const SYSTEM_PROMPT = `你是味迹（TasteVerse）的 AI 品鉴助手。用户会发送一段品鉴描述或提问。你的任务：
+const SYSTEM_PROMPT = `你是 EnergyMap（能量图谱）的 AI 关系顾问。用户会描述一次社交互动，或询问人际关系分析。你的任务：
 
-1. 判断用户意图：保存新品鉴 / 再次品鉴 / 闲聊提问。
-2. 如果是保存类，抽取结构化字段；如果是闲聊提问，基于「相关品鉴记忆」回答。
+1. 判断用户意图：保存新互动 / 再次互动（revisit）/ 闲聊提问。
+2. 如果是保存类，抽取结构化字段；如果是闲聊提问，基于「相关互动记忆」分析回答。
 
 返回严格的 JSON：
 
 {
   "intent": "new" | "revisit" | "chat",
-  "matched_note_id": "如果 intent=revisit，给出最匹配的 note id（来自相关记忆里的 session_id）；否则 null",
-  "referenced_ids": ["你在 reply 中提到或引用的相关品鉴记忆的 session_id 列表，最多 5 个；如无引用则 []"],
+  "matched_note_id": "如果 intent=revisit，给出最匹配的互动 id（来自相关记忆里的 session_id）；否则 null",
+  "referenced_ids": ["你在 reply 中提到或引用的互动记忆的 session_id 列表，最多 5 个；如无引用则 []"],
   "confidence": 0.0-1.0,
-  "reply": "给用户的简短自然语言回复，2-3 句。如果是 chat，这里就是答案正文。",
+  "reply": "给用户的简短自然语言回复，2-3 句。如果是 chat，这里就是分析答案。",
   "data": {
-    "name": "品鉴对象名称（仅 new 必填）",
-    "cat": "类别 key（必须从「已有分类 key 列表」精确选择，或使用 \\"__new__\\" 创建新分类）",
-    "new_cat": "仅当 cat=\\"__new__\\" 时提供：{key:'英文小写_下划线', name:'中文名', icon:'emoji', parent:'drinks'/'food'/'other'}",
-    "score": 0-10 整数（没把握给 7）,
-    "tags": ["风味标签 3-6 个"],
-    "note": "用户描述的精炼版品鉴笔记",
-    "location": "地点（如有）",
-    "price": null 或 数字
+    "name": "互动对象姓名（仅 new 必填，如：Mike、Sarah、妈妈）",
+    "cat": "关系类型 key（必须从「已有关系类型 key 列表」精确选择，或使用 \\"__new__\\" 创建新类型）",
+    "new_cat": "仅当 cat=\\"__new__\\" 时提供：{key:'英文小写_下划线', name:'中文名', icon:'emoji', parent:'social'}",
+    "score": -5到+5 整数（充能为正，耗能为负，没把握给 0）,
+    "tags": ["情绪标签 2-5 个，如：充电、焦虑、平静、受启发、疲惫、有压力"],
+    "note": "用户描述的精炼版活动内容和感受",
+    "location": "地点/场景（如有）",
+    "price": null
   }
 }
 
 **关键规则**：
 
-【分类】
-- "cat" 字段优先从「已有分类 key 列表」中选；只有在完全没有合适的现有分类时，才用 "__new__" 提议新分类，并在 "new_cat" 字段中给出建议（key 用英文小写+下划线，比如 "whisky"、"japanese_food"）。
+【关系类型】
+- "cat" 字段优先从「已有关系类型 key 列表」中选（friend/colleague/family/partner/acquaintance）；只有完全没有合适类型时才用 "__new__"。
 - 不要随意造新分类。
 
 【防止虚构 — 极其重要】
-- **绝对不要发明、虚构用户没有的品鉴记录**。
-- 当用户问推荐 / 总结 / 历史时，**只能引用**「相关品鉴记忆」或「本地品鉴摘要」里**实际存在**的记录。
-- 如果用户的问题相关数据为空（比如问"推荐一款咖啡"但用户没喝过咖啡），**诚实告知**："你目前没有这类的品鉴记录哦，先记录几条吧"。不要硬编一条。
-- 引用具体记录时，必须使用记录的真实名称（来自 name 字段），不要换名字。
+- **绝对不要发明、虚构用户没有的互动记录**。
+- 当用户问分析 / 总结 / 历史时，**只能引用**「相关互动记忆」或「本地互动摘要」里**实际存在**的记录。
+- 如果相关数据为空，**诚实告知**："你目前还没有这类互动记录哦，先记录几条吧"。
+- 引用具体记录时，必须使用记录的真实人名（来自 name 字段），不要换名字。
 
 【referenced_ids】
 - reply 中提到任何具体记录时，必须把对应的 session_id（或 note id）放进 referenced_ids。
-- 如果 reply 没引用任何记录（比如纯通用建议），referenced_ids 为 []。
+- 如果 reply 没引用任何记录，referenced_ids 为 []。
 
 【intent 判断】
-- 用户描述新品鉴体验 → new
-- 用户描述对已有记录的再次品鉴 → revisit
-- 用户问推荐 / 查询 / 总结 → chat，把答案写在 reply 里。
+- 用户描述一次新的社交互动体验 → new
+- 用户描述对已有记录的再次互动 → revisit
+- 用户问谁最耗能/充能、规律分析、推荐场景 → chat，把分析写在 reply 里。
 
 只输出 JSON，不要额外解释。`;
 
@@ -115,7 +116,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const KEY = process.env.DEEPSEEK_API_KEY;
+  const KEY = process.env.NEBIUS_API_KEY;
   if (!KEY) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
@@ -161,11 +162,11 @@ export default async function handler(req, res) {
 key 列表（cat 字段必选其一，或使用 "__new__"）：${JSON.stringify(catKeys)}
 详情：${JSON.stringify(catSummary)}
 
-【本地品鉴摘要 — 用户全部记录的精简列表（共 ${localNotes.length} 条）】
-${localNotes.length === 0 ? '（用户当前还没有任何品鉴记录）' : JSON.stringify(localNotes)}
+【本地互动摘要 — 用户全部记录的精简列表（共 ${localNotes.length} 条）】
+${localNotes.length === 0 ? '（用户当前还没有任何互动记录）' : JSON.stringify(localNotes)}
 
-【相关品鉴记忆 — EverOS 语义搜索的最相关 ${memories.length} 条（含完整内容）】
-${memories.length === 0 ? '（EverOS 未返回相关记忆，请基于上方「本地品鉴摘要」回答）' : memories.map((m, i) => `${i+1}. id=${m.session_id}\n${m.content}`).join('\n\n')}`;
+【相关互动记忆 — EverOS 语义搜索的最相关 ${memories.length} 条（含完整内容）】
+${memories.length === 0 ? '（EverOS 未返回相关记忆，请基于上方「本地互动摘要」回答）' : memories.map((m, i) => `${i+1}. id=${m.session_id}\n${m.content}`).join('\n\n')}`;
 
   // Build messages: system + history + current user message
   const messages = [
@@ -182,14 +183,14 @@ ${memories.length === 0 ? '（EverOS 未返回相关记忆，请基于上方「�
   messages.push({ role: 'user', content: text });
 
   try {
-    const aiRes = await fetch(DEEPSEEK_URL, {
+    const aiRes = await fetch(AI_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: AI_MODEL,
         messages: messages,
         response_format: { type: 'json_object' },
         temperature: 0.3,
@@ -211,10 +212,22 @@ ${memories.length === 0 ? '（EverOS 未返回相关记忆，请基于上方「�
 
     let parsed;
     try {
+      // Try direct parse first
       parsed = JSON.parse(content);
     } catch (e) {
-      console.error('[ai/parse] Failed to parse AI JSON:', content);
-      return res.status(502).json({ error: 'AI returned invalid JSON' });
+      // Model returned reasoning text — extract the JSON block
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          parsed = JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          console.error('[ai/parse] Failed to extract JSON from AI response:', content.slice(0, 300));
+          return res.status(502).json({ error: 'AI returned invalid JSON' });
+        }
+      } else {
+        console.error('[ai/parse] No JSON found in AI response:', content.slice(0, 300));
+        return res.status(502).json({ error: 'AI returned invalid JSON' });
+      }
     }
 
     res.status(200).json(parsed);

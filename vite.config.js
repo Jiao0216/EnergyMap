@@ -4,20 +4,22 @@ import { resolve } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { pathToFileURL } from 'url';
 
-// Load .env.local into process.env (so API handlers can read env vars locally)
-if (existsSync('.env.local')) {
-  readFileSync('.env.local', 'utf8').split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-    const eq = trimmed.indexOf('=');
-    if (eq < 0) return;
-    const k = trimmed.slice(0, eq).trim();
-    let v = trimmed.slice(eq + 1).trim();
-    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-      v = v.slice(1, -1);
-    }
-    if (!process.env[k]) process.env[k] = v;
-  });
+// Load .env and .env.local into process.env (so API handlers can read env vars locally)
+for (const envFile of ['.env', '.env.local']) {
+  if (existsSync(envFile)) {
+    readFileSync(envFile, 'utf8').split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      const eq = trimmed.indexOf('=');
+      if (eq < 0) return;
+      const k = trimmed.slice(0, eq).trim();
+      let v = trimmed.slice(eq + 1).trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1);
+      }
+      if (!process.env[k]) process.env[k] = v;
+    });
+  }
 }
 
 // Local API middleware: routes /api/* to the matching file in /api/

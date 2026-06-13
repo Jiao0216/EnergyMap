@@ -124,7 +124,7 @@ CK_ALL.forEach((k,i)=>{
 // Collapsed indicator
 const lgdTab=document.createElement('div');
 lgdTab.className='lgd-tab';
-lgdTab.innerHTML=`◁ ${CK_ALL.length} 品类`;
+lgdTab.innerHTML=`◁ ${CK_ALL.length} 关系`;
 lgd.parentElement.insertBefore(lgdTab,lgd.nextSibling);
 
 // ============ 3D MATH ============
@@ -949,7 +949,7 @@ function render(){
 
   if(hov){
     const r=hov.rec,ct=CT[r.c];
-    tipEl.innerHTML=`<div class="tc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><div class="tn">${r.n}</div><div class="td">${r.d}</div><div class="ts">评分 <b style="color:${ct.hex}">${r.s}</b>/100</div><div class="tf">${r.f.map(f=>`<span class="tt">${f}</span>`).join('')}</div>`;
+    tipEl.innerHTML=`<div class="tc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><div class="tn">${r.n}</div><div class="td">${r.d}</div><div class="ts">能量 <b style="color:${ct.hex}">${r.s>0?'+':''}${r.s}</b></div><div class="tf">${r.f.map(f=>`<span class="tt">${f}</span>`).join('')}</div>`;
     tipEl.style.left=Math.min(hov.sx+20,W-230)+'px';
     tipEl.style.top=Math.min(hov.sy-55,H-190)+'px';
     tipEl.classList.add('show');cv.style.cursor='pointer';
@@ -2187,7 +2187,7 @@ render=function(){_origRender();renderFocusLens();};
     return `<div class="st-cat" style="color:${_ct.hex}">${_ct.i} ${_ct.l}</div>
 <div class="st-name">${r.n}</div>
 <div class="st-meta">${r.d}${r.o?' · '+r.o:''}${r.m?' · '+r.m:''}</div>
-<div class="st-score">评分 <b style="color:${_ct.hex}">${r.s}</b>/100</div>
+<div class="st-score">能量 <b style="color:${_ct.hex}">${r.s>0?'+':''}${r.s}</b></div>
 <div class="st-tags">${r.f.map(f=>'<span class="st-tag">'+f+'</span>').join('')}</div>
 <div class="st-fb">
   <button onclick="voteSrc('${r.id}',1,this)">👍 准确</button>
@@ -2686,7 +2686,7 @@ updateZoneClips();
 createPage();
 
 // Seed: only a greeting — page starts nearly empty, awaiting user input
-addMsg('ai','你好！我是你的 AI 品鉴师 ✦<br>基于你的品鉴记忆，我可以回顾旧的体验、分析风味偏好、或帮你记录新的一次。');
+addMsg('ai','你好！我是你的 AI 关系顾问 ⚡<br>基于你的互动记忆，我可以分析谁给你充能、谁让你耗能，或帮你记录一次新的互动。');
 
 // Dynamic keyword search — auto-generated from actual CT (category table) and RC (records)
 // For each category: use its display name, key, and top flavor tags from records as keywords
@@ -2745,19 +2745,19 @@ function findByKeyword(text){
     // Show top records from each category for a comprehensive view
     const topPerCat=CK_ALL.map(k=>G[k].slice().sort((a,b)=>b.s-a.s)[0]).filter(Boolean);
     const topRecs=RC.slice().sort((a,b)=>b.s-a.s).slice(0,3);
-    return{r:`你共有 <b>${total}</b> 条记录，涵盖 <b>${cats}</b> 个品类，均分 <b>${avgScore}</b>。`+
-      `<br>最高分：`+topRecs.map(r=>`<b>${r.n}</b>(${r.s})`).join('、'),refs:topPerCat};
+    return{r:`你共有 <b>${total}</b> 条互动记录，涵盖 <b>${cats}</b> 种关系类型，平均能量值 <b>${avgScore}</b>。`+
+      `<br>最高充能：`+topRecs.map(r=>`<b>${r.n}</b>(+${r.s})`).join('、'),refs:topPerCat};
   }
   // Recommend
-  if(/推荐|最好|最佳|最高|top/.test(text)){
+  if(/推荐|最好|最佳|最高|充能|top/.test(text)){
     const topRecs=RC.slice().sort((a,b)=>b.s-a.s).slice(0,8);
-    return{r:`你评分最高的品鉴：`+topRecs.slice(0,5).map((r,i)=>`<br>${i+1}. <b>${r.n}</b>（${CT[r.c]?CT[r.c].l:r.c}）${r.s} 分`).join(''),refs:topRecs};
+    return{r:`最能给你充能的互动：`+topRecs.slice(0,5).map((r,i)=>`<br>${i+1}. <b>${r.n}</b>（${CT[r.c]?CT[r.c].l:r.c}）能量 ${r.s>0?'+':''}${r.s}`).join(''),refs:topRecs};
   }
   return null;
 }
 
-// Tasting-note detection patterns — longer descriptive text with flavor/experience keywords
-const TASTING_PATTERNS=/花香|果香|蜜韵|烟熏|清爽|浓郁|丝滑|甘甜|酸感|苦味|甜感|回甘|余韵|口感|香气|层次|醇厚|顺滑|细腻|柔和|尝|喝了|品了|试了|入口|收尾/;
+// Social interaction detection patterns — longer descriptive text with emotion/energy keywords
+const TASTING_PATTERNS=/充能|耗能|焦虑|平静|受启发|疲惫|有压力|开心|难过|紧张|放松|聊了|见了|和.*一起|约了|聚了|相处|互动|碰面|通话|视频/;
 
 // Build the save-record editable card HTML
 // Dynamic category name list for detection
@@ -2796,7 +2796,7 @@ function findR(t2){
     return buildSaveCard(t2);
   }
 
-  return{r:'可以告诉我更多细节吗？例如品类、产地或风味特征。',refs:[]};
+  return{r:'可以告诉我更多细节吗？例如是谁、你们做了什么、感觉如何？',refs:[]};
 }
 
 // ---- Attachments (image input) ----
@@ -2861,8 +2861,8 @@ const _editStyleNote='font-size:11px;color:#fff;margin-top:4px;padding:8px;backg
 
 function _normalizeScoreUI(v){
   const n=Number(v);
-  if(!isFinite(n))return 7;
-  return Math.max(0,Math.min(10,Math.round(n>10?n/10:n)));
+  if(!isFinite(n))return 0;
+  return Math.max(-5,Math.min(5,Math.round(n)));
 }
 
 function buildAINewCard(reply,data,imgs){
@@ -2890,15 +2890,14 @@ function buildAINewCard(reply,data,imgs){
   const tagsStr=(data.tags||[]).join('、');
 
   return `${reply?_esc(reply)+'<br>':''}<div class="pc" data-card-id="${cardId}">`+
-    `<h4>📝 新品鉴 · 可编辑后保存</h4>`+
-    `<div class="mr"><span>名称*</span><span contenteditable="true" data-field="name" style="${_editStyleSpan}">${_esc(data.name)||''}</span></div>`+
-    `<div class="mr"><span>品类*</span><select data-field="cat" style="${_editStyleSelect}">${catOptions}</select></div>`+
-    (isNewCat?`<div style="font-size:10px;color:var(--sub);margin:-4px 0 4px 70px">🌱 AI 建议新分类。如不需要，请在下拉里选已有分类。</div>`:'')+
-    `<div class="mr"><span>评分</span><input type="number" data-field="score" min="0" max="10" value="${score}" style="${_editStyleInput}"></div>`+
-    `<div class="mr"><span>风味</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}" data-placeholder="用 、或空格 分隔">${_esc(tagsStr)}</span></div>`+
+    `<h4>⚡ 新互动 · 可编辑后保存</h4>`+
+    `<div class="mr"><span>和谁*</span><span contenteditable="true" data-field="name" style="${_editStyleSpan}">${_esc(data.name)||''}</span></div>`+
+    `<div class="mr"><span>关系类型*</span><select data-field="cat" style="${_editStyleSelect}">${catOptions}</select></div>`+
+    (isNewCat?`<div style="font-size:10px;color:var(--sub);margin:-4px 0 4px 70px">🌱 AI 建议新类型。如不需要，请在下拉里选已有类型。</div>`:'')+
+    `<div class="mr"><span>能量值</span><input type="number" data-field="score" min="-5" max="5" value="${score}" style="${_editStyleInput}" placeholder="-5~+5"></div>`+
+    `<div class="mr"><span>情绪标签</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}" data-placeholder="用 、或空格 分隔">${_esc(tagsStr)}</span></div>`+
     `<div class="mr"><span>地点</span><span contenteditable="true" data-field="location" style="${_editStyleSpan}">${_esc(data.location||'')}</span></div>`+
-    `<div class="mr"><span>价格</span><input type="number" data-field="price" min="0" step="0.01" value="${data.price?_esc(data.price):''}" placeholder="选填" style="${_editStyleInput}"></div>`+
-    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">笔记</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
+    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">活动内容</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
     `<div style="display:flex;gap:8px;margin-top:10px">`+
     `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ 确认保存</button>`+
     `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').remove()">取消</button>`+
@@ -2918,13 +2917,12 @@ function buildAIRevisitCard(reply,matchedId,data,imgs){
   const tagsStr=(data.tags||[]).join('、');
 
   return `${reply?_esc(reply)+'<br>':''}<div class="pc" data-card-id="${cardId}">`+
-    `<h4>🔁 再次品鉴 · ${_esc(matchedName)}</h4>`+
-    `<div class="mr"><span>评分*</span><input type="number" data-field="score" min="0" max="10" value="${score}" style="${_editStyleInput}"></div>`+
-    `<div class="mr"><span>风味</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}">${_esc(tagsStr)}</span></div>`+
-    `<div class="mr"><span>价格</span><input type="number" data-field="price" min="0" step="0.01" value="${data.price?_esc(data.price):''}" placeholder="选填" style="${_editStyleInput}"></div>`+
-    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">笔记</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
+    `<h4>🔁 再次互动 · ${_esc(matchedName)}</h4>`+
+    `<div class="mr"><span>能量值*</span><input type="number" data-field="score" min="-5" max="5" value="${score}" style="${_editStyleInput}" placeholder="-5~+5"></div>`+
+    `<div class="mr"><span>情绪标签</span><span contenteditable="true" data-field="tags" style="${_editStyleSpan}">${_esc(tagsStr)}</span></div>`+
+    `<div style="margin-top:8px"><span style="font-size:11px;color:var(--sub)">活动内容</span><div contenteditable="true" data-field="note" style="${_editStyleNote}">${_esc(data.note||'')}</div></div>`+
     `<div style="display:flex;gap:8px;margin-top:10px">`+
-    `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ 添加为再次品鉴</button>`+
+    `<button class="cb" onclick="window.__aiSaveCard('${cardId}',this)">✓ 添加为再次互动</button>`+
     `<button class="cb" style="border-color:var(--sub);color:var(--sub)" onclick="this.closest('.pc').remove()">取消</button>`+
     `</div></div>`;
 }
@@ -2950,25 +2948,25 @@ window.__aiSaveCard=function(cardId,btn){
     score:readField('score'),
     tags:tagsRaw?tagsRaw.split(/[、,，\s]+/).filter(Boolean):[],
     location:readField('location'),
-    price:parseFloat(readField('price'))||null,
+    price:null,
     note:readField('note'),
     photo:cached.data.photo
   };
 
   // Validation
   if(cached.type==='new'){
-    if(!data.name){alert('请填写名称');return;}
-    if(!data.cat){alert('请选择品类');return;}
+    if(!data.name){alert('请填写人名');return;}
+    if(!data.cat){alert('请选择关系类型');return;}
   }
-  if(!data.score||isNaN(parseFloat(data.score))){
-    alert('请填写评分（0-10）');return;
+  if(data.score===''||isNaN(parseFloat(data.score))){
+    alert('请填写能量值（-5 到 +5）');return;
   }
 
   // If user kept the "__new__" cat, create the new category first
   if(data.cat==='__new__'){
     const newCatProposal=cached.data.new_cat;
     if(!newCatProposal||!newCatProposal.name){
-      alert('新分类信息缺失，请改选已有分类');return;
+      alert('新类型信息缺失，请改选已有关系类型');return;
     }
     if(window.__tvCreateCategory){
       const newKey=window.__tvCreateCategory(newCatProposal);
@@ -3119,7 +3117,7 @@ function showModal(r){const ct=CT[r.c];
   // Find existing feedback for this record
   const fb=feedbackLog.filter(f=>f.recId===r.id);
   const fbHtml=fb.length?`<div style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)"><div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--sub);margin-bottom:6px">反馈记录</div>${fb.map(f=>`<div style="font-size:11px;color:${f.vote===1?'var(--accent)':'#ff5050'};margin-bottom:4px">${f.vote===1?'👍 确认准确':'👎 标记不准'}${f.note?' — '+f.note:''}<span style="color:var(--sub);margin-left:8px;font-size:10px">${new Date(f.ts).toLocaleTimeString()}</span></div>`).join('')}</div>`:'';
-  mcEl.innerHTML=`<div class="mcbn" style="background:linear-gradient(90deg,${ct.hex},rgba(255,255,255,.15))"></div><button class="mx" onclick="clM()">✕</button><div class="mbd"><div class="mcc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><h3>${r.n}</h3><div class="mr"><span>日期</span><span>${r.d}</span></div><div class="mr"><span>评分</span><span style="color:${ct.hex};font-weight:700">${r.s}/100</span></div><div class="mr"><span>产地</span><span>${r.o}</span></div><div class="mr"><span>方式</span><span>${r.m}</span></div><div class="mn">${r.nt}</div><div class="mtags">${r.f.map(f=>`<span class="mtg">${f}</span>`).join('')}</div>${fbHtml}</div>`;
+  mcEl.innerHTML=`<div class="mcbn" style="background:linear-gradient(90deg,${ct.hex},rgba(255,255,255,.15))"></div><button class="mx" onclick="clM()">✕</button><div class="mbd"><div class="mcc" style="color:${ct.hex}">${ct.i} ${ct.l}</div><h3>${r.n}</h3><div class="mr"><span>日期</span><span>${r.d}</span></div><div class="mr"><span>能量值</span><span style="color:${ct.hex};font-weight:700">${r.s>0?'+':''}${r.s}</span></div><div class="mn">${r.nt}</div><div class="mtags">${r.f.map(f=>`<span class="mtg">${f}</span>`).join('')}</div>${fbHtml}</div>`;
   modal.classList.add('show');
 }
 window.clM=()=>{modal.classList.remove('show')};modal.addEventListener('click',e=>{if(e.target===modal)clM()});

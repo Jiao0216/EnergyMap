@@ -76,7 +76,7 @@ export default function AISommelier({ embedded = false }) {
         <div className="zone zone-ul" id="zoneUl">
           <canvas id="sC"></canvas>
           <div className="ul-hdr">
-            星鉴 · <b>TASTVERSE</b>
+            能量 · <b>ENERGYMAP</b>
           </div>
         </div>
         <div className="lgd" id="lgd"></div>
@@ -89,7 +89,7 @@ export default function AISommelier({ embedded = false }) {
           <div className="atch" id="atch"></div>
           <div className="ciw">
             <button className="atb" id="atbBtn" title="上传图片">📎</button>
-            <input className="cin" id="ci" placeholder="描述你的品鉴体验，或上传图片…" />
+            <input className="cin" id="ci" placeholder="问我：谁最耗能？和谁互动最充电？上周你怎么了…" />
             <button className="sbtn" id="sb" title="发送">➤</button>
           </div>
           <input type="file" id="fileInput" accept="image/*" multiple style={{ display: 'none' }} />
@@ -98,7 +98,7 @@ export default function AISommelier({ embedded = false }) {
         <div className="zone zone-lr" id="zoneLr">
           <canvas id="srcCanvas"></canvas>
         </div>
-        <div className="rh">溯光 · <b>PROVENANCE</b></div>
+        <div className="rh">溯源 · <b>INSIGHTS</b></div>
         <div className="src-tip" id="srcTip"></div>
       </div>
 
