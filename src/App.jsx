@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import './lib/bootstrap.js';
-import { startApp } from './lib/tasteverse.js';
+import { startApp } from './lib/energymap.js';
 import './styles/global.css';
-import AISommelier from './sommelier/AISommelier.jsx';
+import AIAdvisor from './advisor/AIAdvisor.jsx';
 
 export default function App() {
   useEffect(() => {
-    if (window.__tvStarted) return;
-    window.__tvStarted = true;
+    if (window.__emStarted) return;
+    window.__emStarted = true;
     startApp();
   }, []);
 
@@ -146,25 +146,15 @@ export default function App() {
           </div>
           {/* Hidden fields kept for JS compatibility */}
           <div style={{ display: 'none' }}>
-            <div className="price-mode-toggle" id="price-mode-toggle">
-              <span className="price-mode sel" data-mode="unit">Unit</span>
-              <span className="price-mode" data-mode="avg">Per Person</span>
-            </div>
-            <input type="number" id="rec-price" />
-            <input type="number" id="rec-price-total" />
-            <input type="number" id="rec-price-people" defaultValue="2" />
-            <div id="price-unit-group"></div>
-            <div id="price-avg-group"></div>
-            <div id="price-avg-result"></div>
             <input type="file" id="rec-photo" accept="image/*" />
-            <div id="photo-preview"><img id="photo-img" /></div>
+            <div id="photo-preview"><img id="photo-img" alt="" /></div>
           </div>
           <div className="record-actions"><button className="btn-p" id="btn-save" style={{ flex: 2 }}>Save Interaction</button></div>
         </div>
       </div>
 
       <div className="view" id="chat-view">
-        <AISommelier embedded />
+        <AIAdvisor embedded />
       </div>
 
       <div className="view" id="categories-view">

@@ -1,20 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-/* Scoped to .sommelier-root so sommelier variables don't override main app's :root */
-.sommelier-root{
+/* Scoped to .advisor-root so advisor variables don't override main app's :root */
+.advisor-root{
   --bg:#060610;--panel:#0a0a18;--border:#14142a;--text:#e0e0e8;--sub:#6a6a8e;--accent:#64ffda;
   --topbar:48px;  /* Top bar reserved height — matches demo header */
   --dL:0.4;       /* Left divider: top intercept at 40% of W along topbar bottom */
   --dR:0.6;       /* Right divider: bottom intercept at 60% of W along screen bottom */
 }
 /* Standalone root: fills viewport */
-.sommelier-root{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;position:relative}
+.advisor-root{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;position:relative}
 /* Embedded root: fills parent container */
-.sommelier-root.sommelier-embedded{height:100%;width:100%;position:absolute;inset:0}
+.advisor-root.advisor-embedded{height:100%;width:100%;position:absolute;inset:0}
 /* Top bar — only in standalone mode */
 .topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar);background:rgba(6,6,16,.95);z-index:50;border-bottom:1px solid rgba(255,255,255,.04);backdrop-filter:blur(12px)}
 /* Stage: below topbar in standalone, fills container in embedded */
 .stage{position:fixed;top:var(--topbar);left:0;right:0;bottom:0;background:var(--bg);overflow:hidden}
-.sommelier-embedded .stage{position:absolute;top:0;left:0;right:0;bottom:0}
+.advisor-embedded .stage{position:absolute;top:0;left:0;right:0;bottom:0}
 /* When parent .view is not active, prevent stage from intercepting clicks on other tabs */
 .view:not(.active) .stage{pointer-events:none;visibility:hidden}
 /* Three zones — clip-paths set by JS to match parallelogram geometry */
@@ -63,15 +63,15 @@
 .rail .msg{pointer-events:auto}
 
 /* Each message pill: compact, soft, anchored to its (left, top) point. Transform keeps the anchor at a specific corner. */
-.sommelier-root .msg{position:absolute;display:flex;gap:10px;align-items:flex-start;max-width:min(56vw,720px);min-width:220px;animation:mi .4s ease both;transition:opacity .3s;
+.advisor-root .msg{position:absolute;display:flex;gap:10px;align-items:flex-start;max-width:min(56vw,720px);min-width:220px;animation:mi .4s ease both;transition:opacity .3s;
   /* Reset global.css .msg overrides */
   padding:0;background:none;border:none;border-radius:0;align-self:auto}
 @keyframes mi{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:none}}
 .msg .mb{padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.55;backdrop-filter:blur(14px)}
-.sommelier-root .msg.ai{transform-origin:top left;background:none;border:none}
-.sommelier-root .msg.ai .mb{background:rgba(14,14,28,.72);border:1px solid rgba(255,255,255,.07);border-top-left-radius:6px;color:var(--text)}
-.sommelier-root .msg.user{flex-direction:row-reverse;transform-origin:bottom right;background:none;border:none}
-.sommelier-root .msg.user .mb{background:linear-gradient(135deg,rgba(34,44,64,.78),rgba(20,26,42,.78));border:1px solid rgba(255,255,255,.06);border-bottom-right-radius:6px;color:#f2f4ff}
+.advisor-root .msg.ai{transform-origin:top left;background:none;border:none}
+.advisor-root .msg.ai .mb{background:rgba(14,14,28,.72);border:1px solid rgba(255,255,255,.07);border-top-left-radius:6px;color:var(--text)}
+.advisor-root .msg.user{flex-direction:row-reverse;transform-origin:bottom right;background:none;border:none}
+.advisor-root .msg.user .mb{background:linear-gradient(135deg,rgba(34,44,64,.78),rgba(20,26,42,.78));border:1px solid rgba(255,255,255,.06);border-bottom-right-radius:6px;color:#f2f4ff}
 .msg .mti{font-size:10px;color:var(--sub);margin-top:4px;letter-spacing:.5px}
 .msg.user .mti{text-align:right}
 .msg.faded{opacity:.45;filter:saturate(.7)}

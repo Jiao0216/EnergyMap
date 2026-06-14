@@ -1,6 +1,6 @@
-// AI Sommelier Engine — all rendering, chat, and interaction logic.
+// AI Relationship Advisor — chat, visualization, and interaction logic.
 
-export function startSommelier(opts={}) {
+export function startAdvisor(opts={}) {
 const _EMBEDDED=!!opts.embedded; // true when inside main app (no own topbar)
 const _CONTAINER=opts.container||null; // parent element for sizing
 
@@ -21,54 +21,44 @@ function _hexRgb(h){h=h.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[
 
 let CT,RC,G,CK;
 
-if(_EMBEDDED && window.__tvNotes && window.__tvCategories){
+if(_EMBEDDED && window.__emNotes && window.__emCategories){
   // ── EMBEDDED MODE: read live data from main app ──
-  const tvNotes=window.__tvNotes;
-  const tvCats=window.__tvCategories;
+  const emNotes=window.__emNotes;
+  const emCats=window.__emCategories;
   // Build CT (category table) from main app's CATEGORIES
   CT={};
-  Object.keys(tvCats).forEach(k=>{
-    const c=tvCats[k];
+  Object.keys(emCats).forEach(k=>{
+    const c=emCats[k];
     const rgb=_hexRgb(c.color||'#888888');
     CT[k]={l:c.name, r:rgb.r, g:rgb.g, b:rgb.b, hex:c.color||'#888888', i:c.icon||'📝'};
   });
   // Build RC (records) from main app's notes — convert field names
-  RC=tvNotes.map((n,i)=>({
-    id:n.id||('tv_'+i),
+  RC=emNotes.map((n,i)=>({
+    id:n.id||('em_'+i),
     c:n.cat,
     n:n.name,
     d:n.time,
-    s:Math.round((n.score||0)*10),  // main app scores 0-10, sommelier expects 0-100
+    s:n.score||0,
     f:n.tags||[],
-    o:'',    // main app doesn't track origin separately
-    m:'',    // main app doesn't track method separately
+    o:'',
+    m:'',
     nt:n.note||''
   }));
 }else{
-  // ── STANDALONE MODE: built-in demo data ──
+  // ── STANDALONE MODE: relationship demo data ──
   CT={
-    coffee:{l:'Coffee',r:212,g:165,b:116,hex:'#d4a574',i:'☕'},
-    tea:{l:'Tea',r:126,g:200,b:130,hex:'#7ec882',i:'🍵'},
-    wine:{l:'Wine',r:199,g:91,b:122,hex:'#c75b7a',i:'🍷'},
-    whisky:{l:'Whisky',r:232,g:168,b:56,hex:'#e8a838',i:'🥃'},
-    sake:{l:'Sake',r:142,g:184,b:229,hex:'#8eb8e5',i:'🍶'}
+    friend:{l:'Friend',r:240,g:160,b:64,hex:'#F0A040',i:'👫'},
+    colleague:{l:'Colleague',r:80,g:144,b:224,hex:'#5090E0',i:'💼'},
+    family:{l:'Family',r:160,g:96,b:208,hex:'#A060D0',i:'👨‍👩‍👧'},
+    partner:{l:'Partner',r:224,g:80,b:128,hex:'#E05080',i:'💕'},
+    acquaintance:{l:'Acquaintance',r:80,g:176,b:144,hex:'#50B090',i:'🤝'}
   };
   RC=[
-    {id:1,c:'coffee',n:'Ethiopia Yirgacheffe',d:'2025-04-12',s:3,f:['blueberry','citrus','chocolate'],o:'Ethiopia',m:'V60',nt:'Bright blueberry jam sweetness.'},
-    {id:2,c:'coffee',n:'Colombia Pink Bourbon',d:'2025-04-08',s:2,f:['caramel','nutty','red apple'],o:'Colombia',m:'Kalita',nt:'Caramel sweetness throughout.'},
-    {id:3,c:'coffee',n:'Panama Geisha',d:'2025-03-28',s:4,f:['jasmine','bergamot','honey'],o:'Panama',m:'V60',nt:'Floral jasmine aroma.'},
-    {id:4,c:'coffee',n:'Kenya AA',d:'2025-03-15',s:3,f:['blackcurrant','tomato'],o:'Kenya',m:'Chemex',nt:'Bright blackcurrant acidity.'},
-    {id:5,c:'coffee',n:'Guatemala Huehuetenango',d:'2025-03-05',s:2,f:['smoky','cocoa'],o:'Guatemala',m:'French Press',nt:'Smoky cocoa notes.'},
-    {id:6,c:'tea',n:'Bai Hao Yinzhen',d:'2025-04-10',s:3,f:['downy','honey'],o:'Fujian',m:'Gaiwan',nt:'Downy honey sweetness.'},
-    {id:7,c:'tea',n:'Wuyi Rock Cinnamon',d:'2025-04-02',s:4,f:['cinnamon','rocky'],o:'Wuyi',m:'Gaiwan',nt:'Distinct rock oolong character.'},
-    {id:8,c:'tea',n:'Anxi Tieguanyin',d:'2025-03-20',s:2,f:['orchid','creamy'],o:'Anxi',m:'Gaiwan',nt:'Orchid fragrance.'},
-    {id:9,c:'wine',n:'Opus One 2019',d:'2025-04-06',s:4,f:['blackcurrant','cedar'],o:'Napa Valley',m:'Decanted 2h',nt:'Silky tannins.'},
-    {id:10,c:'wine',n:'Penfolds Grange 2018',d:'2025-03-25',s:4,f:['blackberry','spice'],o:'S. Australia',m:'Decanted 3h',nt:'Rich and layered.'},
-    {id:11,c:'wine',n:'Château Margaux 2015',d:'2025-03-10',s:5,f:['violet','velvet'],o:'Bordeaux',m:'Decanted 2.5h',nt:'Legendary vintage.'},
-    {id:12,c:'whisky',n:'Yamazaki 18yr',d:'2025-04-04',s:4,f:['melon','mizunara oak'],o:'Japan',m:'Neat',nt:'Oriental aromatic character.'},
-    {id:13,c:'whisky',n:'Macallan 25yr',d:'2025-03-18',s:5,f:['dried fruit','toffee'],o:'Scotland',m:'Neat',nt:'Sherry cask excellence.'},
-    {id:14,c:'sake',n:'Dassai 23',d:'2025-04-09',s:3,f:['white peach','floral'],o:'Yamaguchi',m:'Chilled',nt:'White peach fruit.'},
-    {id:15,c:'sake',n:'Juyondai',d:'2025-03-30',s:5,f:['cantaloupe','lychee'],o:'Yamagata',m:'Chilled',nt:'Legendary.'},
+    {id:1,c:'friend',n:'Mike',d:'2025-04-12',s:4,f:['recharged','happy','relaxed'],nt:'Hiking together — great conversation and fresh air.'},
+    {id:2,c:'colleague',n:'Sarah',d:'2025-04-08',s:-2,f:['stressed','drained'],nt:'Long meeting ran over; felt interrupted the whole time.'},
+    {id:3,c:'family',n:'Mom',d:'2025-03-28',s:3,f:['warm','calm'],nt:'Sunday dinner at home, relaxed and unhurried.'},
+    {id:4,c:'partner',n:'Alex',d:'2025-03-15',s:5,f:['inspired','happy'],nt:'Deep talk about future plans — felt fully seen.'},
+    {id:5,c:'acquaintance',n:'Chris',d:'2025-03-05',s:0,f:['neutral','polite'],nt:'Casual catch-up; pleasant but not especially energizing.'},
   ];
 }
 // Group records by category
@@ -602,7 +592,7 @@ function drawRibbonQuad(q2d,si,highlight,t,signedArea){
   ctx.restore();
 }
 
-// ============ PLANET (V16 full 7-layer TasteVerse-style) ============
+// ============ PLANET (7-layer energy-map style) ============
 const PLANET_STATE={};
 function ensurePlanetState(id){
   if(PLANET_STATE[id])return PLANET_STATE[id];
@@ -2689,7 +2679,7 @@ createPage();
 addMsg('ai','Hi! I\'m your AI Relationship Advisor ⚡<br>Based on your interaction history, I can analyze who energizes you, who drains you, or help you log a new interaction.');
 
 // Dynamic keyword search — auto-generated from actual CT (category table) and RC (records)
-// For each category: use its display name, key, and top flavor tags from records as keywords
+// For each category: use its display name, key, and top emotion tags from records as keywords
 const CAT_KEYWORDS={};
 Object.keys(CT).forEach(catKey=>{
   const catInfo=CT[catKey];
@@ -2697,7 +2687,7 @@ Object.keys(CT).forEach(catKey=>{
   // Add the category display name and key
   if(catInfo.l) kws.add(catInfo.l);
   if(catKey.length>1) kws.add(catKey);
-  // Add top flavor tags from records in this category (most common ones)
+  // Add top emotion tags from records in this category (most common ones)
   const catRecs=RC.filter(r=>r.c===catKey);
   const tagCount={};
   catRecs.forEach(r=>(r.f||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1}));
@@ -2757,7 +2747,7 @@ function findByKeyword(text){
 }
 
 // Social interaction detection patterns — longer descriptive text with emotion/energy keywords
-const TASTING_PATTERNS=/energize|drain|anxious|calm|inspired|tired|stressed|happy|sad|nervous|relax|talked|met|together|hung out|spent time|interaction|call|video chat/i;
+const INTERACTION_PATTERNS=/energize|drain|anxious|calm|inspired|tired|stressed|happy|sad|nervous|relax|talked|met|together|hung out|spent time|interaction|call|video chat/i;
 
 // Build the save-record editable card HTML
 // Dynamic category name list for detection
@@ -2766,13 +2756,13 @@ const _catNameRegex=_catNames.length?new RegExp(_catNames.join('|')):null;
 function buildSaveCard(t2){
   const excerpt=t2.slice(0,80);
   const guessCategory=_catNameRegex?((t2.match(_catNameRegex))||[])[0]||'':'';
-  const guessFlavor=t2.match(/charged|anxious|calm|inspired|tired|stressed|happy|sad|nervous|relaxed/gi)||[];
+  const guessTags=t2.match(/charged|anxious|calm|inspired|tired|stressed|happy|sad|nervous|relaxed/gi)||[];
   return{r:`Looks like this could be an interaction — want to save it?`+
     `<div class="pc"><h4>📝 Save Interaction</h4>`+
     `<p style="margin:6px 0;font-size:12px;color:var(--sub)">Extracted from your message — please confirm or edit:</p>`+
     `<div class="mr"><span>Notes</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none;min-width:120px">${excerpt}</span></div>`+
     (guessCategory?`<div class="mr"><span>Type</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessCategory}</span></div>`:'')+
-    (guessFlavor.length?`<div class="mr"><span>Tags</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessFlavor.join(', ')}</span></div>`:'')+
+    (guessTags.length?`<div class="mr"><span>Tags</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">${guessTags.join(', ')}</span></div>`:'')+
     `<div class="mr"><span>Energy</span><span contenteditable="true" style="color:#fff;border-bottom:1px dashed rgba(255,255,255,.15);outline:none">—</span></div>`+
     `<div style="display:flex;gap:8px;margin-top:10px">`+
     `<button class="cb" onclick="cC()">✓ Save</button>`+
@@ -2781,9 +2771,9 @@ function buildSaveCard(t2){
 }
 
 function findR(t2){
-  // PRIORITY 1: Check if this looks like a tasting note (descriptive text with flavor/experience words)
-  const hasTastingWords=TASTING_PATTERNS.test(t2);
-  if(t2.length>10 && hasTastingWords){
+  // PRIORITY 1: descriptive text with emotion/energy keywords
+  const hasInteractionWords=INTERACTION_PATTERNS.test(t2);
+  if(t2.length>10 && hasInteractionWords){
     return buildSaveCard(t2);
   }
 
@@ -2791,7 +2781,7 @@ function findR(t2){
   const kwResult=findByKeyword(t2);
   if(kwResult) return kwResult;
 
-  // PRIORITY 3: Long text without known keywords — still might be a tasting note
+  // PRIORITY 3: Long text without known keywords — still might be an interaction log
   if(t2.length>20){
     return buildSaveCard(t2);
   }
@@ -2841,7 +2831,7 @@ function addMsgWithRef(tp,html,refs,imgs){
 const _aiCardCache={};
 let _aiCardCounter=0;
 
-// Conversation history for AI sommelier (recent turns sent with each request for context)
+// Conversation history for AI advisor (recent turns sent with each request for context)
 const _aiChatHistory=[];
 const _AI_HISTORY_MAX=12;
 function _pushAiHistory(role,content){
@@ -2871,7 +2861,7 @@ function buildAINewCard(reply,data,imgs){
   if(imgs&&imgs[0])dataCopy.photo=imgs[0];
   _aiCardCache[cardId]={type:'new',data:dataCopy};
 
-  const cats=window.__tvCategories||{};
+  const cats=window.__emCategories||{};
   const catKeys=Object.keys(cats);
 
   // Check if AI proposes a new category
@@ -2910,7 +2900,7 @@ function buildAIRevisitCard(reply,matchedId,data,imgs){
   if(imgs&&imgs[0])dataCopy.photo=imgs[0];
   _aiCardCache[cardId]={type:'revisit',noteId:matchedId,data:dataCopy};
 
-  const notes=window.__tvNotes||[];
+  const notes=window.__emNotes||[];
   const matched=notes.find(n=>n.id===matchedId);
   const matchedName=matched?matched.name:'Existing record';
   const score=_normalizeScoreUI(data.score);
@@ -2968,8 +2958,8 @@ window.__aiSaveCard=function(cardId,btn){
     if(!newCatProposal||!newCatProposal.name){
       alert('New type info missing, please select an existing type');return;
     }
-    if(window.__tvCreateCategory){
-      const newKey=window.__tvCreateCategory(newCatProposal);
+    if(window.__emCreateCategory){
+      const newKey=window.__emCreateCategory(newCatProposal);
       if(!newKey){alert('Failed to create new type');return;}
       data.cat=newKey;
     }else{
@@ -2978,10 +2968,10 @@ window.__aiSaveCard=function(cardId,btn){
   }
 
   let saved=null;
-  if(cached.type==='new'&&window.__tvAddNote){
-    saved=window.__tvAddNote(data);
-  }else if(cached.type==='revisit'&&window.__tvAddVisit){
-    saved=window.__tvAddVisit(cached.noteId,data);
+  if(cached.type==='new'&&window.__emAddNote){
+    saved=window.__emAddNote(data);
+  }else if(cached.type==='revisit'&&window.__emAddVisit){
+    saved=window.__emAddVisit(cached.noteId,data);
   }
 
   if(saved){
@@ -3020,15 +3010,15 @@ async function send2(){
 
   const userText=t2||'[User uploaded an image, please analyze based on existing records]';
   try{
-    const notes=window.__tvNotes||[];
-    const cats=window.__tvCategories||{};
+    const notes=window.__emNotes||[];
+    const cats=window.__emCategories||{};
     const r=await fetch('/api/ai/parse',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         text:userText,
         history:_aiChatHistory.slice(),
-        userId:window.__tvUserId||null,
+        userId:window.__emUserId||null,
         categories:cats,
         notes:notes
       })
@@ -3041,7 +3031,7 @@ async function send2(){
     _pushAiHistory('assistant',JSON.stringify(result));
 
     let html;
-    const notesNow=window.__tvNotes||[];
+    const notesNow=window.__emNotes||[];
     if(result.intent==='revisit'&&result.matched_note_id&&notesNow.find(n=>n.id===result.matched_note_id)){
       html=buildAIRevisitCard(result.reply,result.matched_note_id,result.data||{},imgs);
     }else if(result.intent==='new'||(result.intent==='revisit'&&result.data&&result.data.name)){
@@ -3064,7 +3054,7 @@ async function send2(){
       if(refs.length)uSrc(refs);
     }
   }catch(e){
-    console.error('[Sommelier] AI parse error:',e);
+    console.error('[Advisor] AI parse error:',e);
     loading.msg.html='<span style="color:#e85050;font-size:12px">Error: '+_esc(e.message||'Network error')+'</span>';
     renderPage(loading.page);
   }finally{

@@ -1,6 +1,6 @@
-// Vercel Serverless Function — AI tasting note parser via Nebius AI Studio.
-// Takes free-form text + user's existing notes, decides whether the user is
-// describing a NEW tasting or RE-TASTING an existing record, and extracts
+// Vercel Serverless Function — AI interaction parser via Nebius AI Studio.
+// Takes free-form text + user's existing records, decides whether the user is
+// describing a NEW interaction or a FOLLOW-UP on an existing one, and extracts
 // structured data either way.
 //
 // Env vars required:

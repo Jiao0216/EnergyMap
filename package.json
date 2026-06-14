@@ -1,7 +1,11 @@
 {
-  "name": "tasteverse",
+  "name": "energymap",
   "private": true,
   "version": "1.0.0",
+  "authors": [
+    "Jiao Zhang",
+    "Xiaotong Zhuang"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

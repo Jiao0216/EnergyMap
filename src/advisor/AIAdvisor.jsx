@@ -1,14 +1,14 @@
 /**
- * AISommelier — React wrapper for the AI Advisor panel.
+ * AIAdvisor — React wrapper for the AI Relationship Advisor panel.
  *
  * Props:
  *   embedded (bool) — when true, hides own topbar and uses parent container for sizing.
  */
 import { useEffect, useRef } from 'react';
-import { startSommelier } from './sommelier-engine.js';
-import './sommelier.css';
+import { startAdvisor } from './advisor-engine.js';
+import './advisor.css';
 
-export default function AISommelier({ embedded = false }) {
+export default function AIAdvisor({ embedded = false }) {
   const rootRef = useRef(null);
   const startedRef = useRef(false);
 
@@ -26,11 +26,11 @@ export default function AISommelier({ embedded = false }) {
       if (embedded) {
         const viewEl = el.closest('.view');
         if (viewEl && !viewEl.classList.contains('active')) return;
-        if (!window.__tvCategories) return; // main app hasn't initialized yet
+        if (!window.__emCategories) return; // main app hasn't initialized yet
       }
       startedRef.current = true;
-      window.__sommelierStarted = true;
-      startSommelier({
+      window.__advisorStarted = true;
+      startAdvisor({
         embedded,
         container: embedded ? el : null,
       });
@@ -38,10 +38,10 @@ export default function AISommelier({ embedded = false }) {
 
     if (!embedded) {
       // Standalone: init immediately
-      if (!window.__sommelierStarted) {
-        window.__sommelierStarted = true;
+      if (!window.__advisorStarted) {
+        window.__advisorStarted = true;
         startedRef.current = true;
-        startSommelier({ embedded: false, container: null });
+        startAdvisor({ embedded: false, container: null });
       }
       return;
     }
@@ -60,7 +60,7 @@ export default function AISommelier({ embedded = false }) {
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', onResize);
-      window.__sommelierStarted = false;
+      window.__advisorStarted = false;
       startedRef.current = false;
     };
   }, []);
@@ -68,11 +68,11 @@ export default function AISommelier({ embedded = false }) {
   return (
     <div
       ref={rootRef}
-      className={`sommelier-root${embedded ? ' sommelier-embedded' : ''}`}
+      className={`advisor-root${embedded ? ' advisor-embedded' : ''}`}
     >
       {!embedded && <div className="topbar" id="topbar"></div>}
 
-      <div className="stage" id="sommelierStage">
+      <div className="stage" id="advisorStage">
         <div className="zone zone-ul" id="zoneUl">
           <canvas id="sC"></canvas>
           <div className="ul-hdr">

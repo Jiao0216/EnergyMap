@@ -1,8 +1,7 @@
 // ============================================================
-// TasteVerse core logic — ported verbatim from original demo.html
-// Wrapped as an exported startApp() to be invoked inside a React
-// useEffect on mount. Depends on window.THREE, window.ForceGraph3D,
-// and the full DOM from App.jsx.
+// EnergyMap core logic — 3D relationship graph, auth, CRUD, EverOS
+// Invoked via startApp() inside React useEffect on mount.
+// Depends on window.THREE, window.ForceGraph3D, and the DOM from App.jsx.
 // ============================================================
 
 export function startApp() {
@@ -12,14 +11,14 @@ export function startApp() {
 function showError(msg){
   var b=document.getElementById('error-banner');
   b.textContent='[Debug] '+msg;b.style.display='block';
-  console.error('[TasteVerse]',msg);
+  console.error('[EnergyMap]',msg);
 }
 
 if(typeof ForceGraph3D==='undefined'){
   showError('ForceGraph3D not loaded! Check browser console (F12). THREE='+(typeof THREE)+', scripts may be blocked by CORS or ad-blocker.');
   return;
 }
-console.log('[TasteVerse] ForceGraph3D: OK, THREE: '+(typeof THREE!=='undefined'?'OK':'missing'));
+console.log('[EnergyMap] ForceGraph3D: OK, THREE: '+(typeof THREE!=='undefined'?'OK':'missing'));
 
 // ══════════════════════════════════════════════════
 //  AUTH SYSTEM — email verification (MVP: localStorage)
@@ -29,11 +28,21 @@ var _verifyEmail='';
 var _verifyHash='';   // HMAC hash from server
 var _verifyExpiry=0;  // expiry timestamp from server
 
-function storageKey(email,key){return 'tv_'+email.toLowerCase().trim()+'_'+key;}
+function storageKey(email,key){
+  var e=email.toLowerCase().trim();
+  var newKey='em_'+e+'_'+key;
+  var oldKey='tv_'+e+'_'+key;
+  try{
+    if(localStorage.getItem(newKey)==null&&localStorage.getItem(oldKey)!=null){
+      localStorage.setItem(newKey,localStorage.getItem(oldKey));
+    }
+  }catch(err){}
+  return newKey;
+}
 
 // ── Login Particle Animation Engine ──
 var _loginAnim={running:false,raf:0,particles:[],ghostLayer:[],captureZone:null,morphing:false,emojiIdx:0};
-var _loginEMOJIS=['☕','🍲','🍷','🍣','🍕','🍰','🥘','🍦','🍹'];
+var _loginEMOJIS=['💬','👥','❤️','⚡','🌟','🤝','✨','🧠','💡'];
 var _loginTheme={current:{h:215,s:65,l:85},from:{h:215,s:65,l:85},to:{h:215,s:65,l:85},colorT:1,transitioning:false};
 
 function _lRgbToHsl(r,g,b){r/=255;g/=255;b/=255;var mx=Math.max(r,g,b),mn=Math.min(r,g,b),h,s,l=(mx+mn)/2;if(mx===mn){h=s=0;}else{var d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}}return{h:h*360,s:s*100,l:l*100};}
@@ -304,7 +313,7 @@ function updateUserBadge(){
 
 function logout(){
   currentUser=null;
-  try{localStorage.removeItem('tv_session');localStorage.removeItem('em_session');}catch(e){}
+  try{localStorage.removeItem('em_session');localStorage.removeItem('tv_session');}catch(e){}
   showLoginScreen();
   // Reset login form
   document.getElementById('login-email').value='';
@@ -374,7 +383,7 @@ function logout(){
       msg.textContent='Code resent — check your inbox';msg.className='login-msg success';
       startResendCountdown(cooldown);
     },function(err){
-      console.error('[TasteVerse] resend error:',err);
+      console.error('[EnergyMap] resend error:',err);
       if(err.status===429&&err.retryAfter){
         startResendCountdown(err.retryAfter);
         msg.textContent='Please wait '+err.retryAfter+'s before retrying';msg.className='login-msg error';
@@ -407,7 +416,7 @@ function logout(){
         startResendCountdown(cooldown);
         setTimeout(function(){codeInput.focus();},100);
       },function(err){
-        console.error('[TasteVerse] send-code error:',err);
+        console.error('[EnergyMap] send-code error:',err);
         if(err.status===429&&err.retryAfter){
           msg.textContent='Too many requests, please wait '+err.retryAfter+'s';
         }else{
@@ -434,7 +443,7 @@ function logout(){
         }
         // Login success
         currentUser={email:_verifyEmail};
-        try{localStorage.setItem('tv_session',JSON.stringify(currentUser));localStorage.setItem('em_session',JSON.stringify(currentUser));}catch(e){}
+        try{localStorage.setItem('em_session',JSON.stringify(currentUser));}catch(e){}
         msg.textContent='Signed in!';msg.className='login-msg success';
         setTimeout(function(){
           hideLoginScreen();
@@ -445,7 +454,7 @@ function logout(){
           startApp();
         },500);
       }).catch(function(err){
-        console.error('[TasteVerse] verify-code error:',err);
+        console.error('[EnergyMap] verify-code error:',err);
         var errMsg=err.message==='Code expired'?'Code expired — please resend':
                    err.message==='Invalid code'?'Incorrect code — please try again':
                    'Verification failed: '+(err.message||'Check your network');
@@ -595,7 +604,7 @@ var EVEROS_LOCAL='http://localhost:1995/api/v1';
 var EVEROS_CLOUD='/api/everos';  // Vercel serverless proxy (bypasses CORS)
 var EVEROS_API_KEY='';  // Key is now handled server-side in the proxy
 var EVEROS_API=(EVEROS_MODE==='cloud')?EVEROS_CLOUD:EVEROS_LOCAL;
-var USER_ID='flavortrace_user_001';
+var USER_ID='energymap_user_001';
 
 // ── DEFAULT DATA (5 core categories for new users) ──
 var DEFAULT_TAXONOMY={
@@ -621,7 +630,7 @@ function saveUserData(){
     localStorage.setItem(storageKey(currentUser.email,'notes'),JSON.stringify(notes));
     localStorage.setItem(storageKey(currentUser.email,'taxonomy'),JSON.stringify(TAXONOMY));
     localStorage.setItem(storageKey(currentUser.email,'categories'),JSON.stringify(CATEGORIES));
-  }catch(e){console.warn('[TasteVerse] Save failed:',e);}
+  }catch(e){console.warn('[EnergyMap] Save failed:',e);}
 }
 
 // Migrate legacy Chinese relationship labels saved in localStorage → English defaults
@@ -719,7 +728,7 @@ function migrateNotesToEnglish(){
 function loadUserData(){
   if(!currentUser)return;
   var email=currentUser.email;
-  USER_ID='tv_'+email.replace(/[^a-zA-Z0-9]/g,'_');
+  USER_ID='em_'+email.replace(/[^a-zA-Z0-9]/g,'_');
   updateUserBadge();
   try{
     var savedNotes=localStorage.getItem(storageKey(email,'notes'));
@@ -755,7 +764,7 @@ function loadUserData(){
       console.log('[EnergyMap] New user: '+email+' — initialized with 5 relationship types');
     }
   }catch(e){
-    console.warn('[TasteVerse] Load failed, using defaults:',e);
+    console.warn('[EnergyMap] Load failed, using defaults:',e);
     TAXONOMY=deepClone(DEFAULT_TAXONOMY);
     CATEGORIES=deepClone(DEFAULT_CATEGORIES);
     notes=[];
@@ -1151,7 +1160,7 @@ function calBuildMiniGraph(dayNotes){
         lnk.distance(function(ll){if(ll._crossLink)return 75;if(ll._catLink){var sim=ll._sim||0;return 32-sim*20;}return 55;});
         lnk.strength(function(ll){if(ll._crossLink)return 0.06;if(ll._catLink){var sim=ll._sim||0;return 0.15+sim*0.4;}return (ll._str||0.1)*1.1;});
       }
-    }catch(e){console.warn('[TasteVerse] Mini force cfg:',e);}
+    }catch(e){console.warn('[EnergyMap] Mini force cfg:',e);}
   },100);
 
   // ── Scene: Starfield + Nebula + Lights (matching main graph) ──
@@ -1337,50 +1346,6 @@ for(var i=-5;i<=5;i++){(function(i){var b=document.createElement('div');b.classN
 var tagInput=document.getElementById('tag-input'),tagsRow=document.getElementById('tags-row');
 tagInput.onkeydown=function(e){if(e.key==='Enter'&&tagInput.value.trim()){e.preventDefault();var v=tagInput.value.trim();if(userTags.indexOf(v)<0){userTags.push(v);var t=document.createElement('div');t.className='tag rm';t.textContent=v;t.onclick=function(){userTags=userTags.filter(function(x){return x!==v;});t.remove();};tagsRow.insertBefore(t,tagInput);}tagInput.value='';}};
 
-// ── PRICE ──────────────────────────────────────
-var priceMode='unit'; // 'unit' or 'avg'
-document.getElementById('price-mode-toggle').onclick=function(e){
-  var t=e.target;
-  if(!t.dataset||!t.dataset.mode)return;
-  priceMode=t.dataset.mode;
-  this.querySelectorAll('.price-mode').forEach(function(m){m.classList.toggle('sel',m.dataset.mode===priceMode);});
-  document.getElementById('price-unit-group').style.display=priceMode==='unit'?'flex':'none';
-  document.getElementById('price-avg-group').style.display=priceMode==='avg'?'block':'none';
-  document.getElementById('price-avg-result').textContent='';
-};
-function calcAvgPrice(){
-  var total=parseFloat(document.getElementById('rec-price-total').value)||0;
-  var people=parseInt(document.getElementById('rec-price-people').value)||1;
-  var result=document.getElementById('price-avg-result');
-  if(total>0&&people>0){
-    var avg=(total/people).toFixed(2);
-    result.textContent='≈ avg ¥'+avg;
-  }else{
-    result.textContent='';
-  }
-}
-document.getElementById('rec-price-total').oninput=calcAvgPrice;
-document.getElementById('rec-price-people').oninput=calcAvgPrice;
-
-function getPriceData(){
-  if(priceMode==='unit'){
-    var v=parseFloat(document.getElementById('rec-price').value);
-    return v>0?{type:'unit',price:v}:null;
-  }else{
-    var total=parseFloat(document.getElementById('rec-price-total').value)||0;
-    var people=parseInt(document.getElementById('rec-price-people').value)||1;
-    if(total>0)return {type:'avg',total:total,people:people,price:Math.round(total/people*100)/100};
-    return null;
-  }
-}
-
-function resetPriceFields(){
-  document.getElementById('rec-price').value='';
-  document.getElementById('rec-price-total').value='';
-  document.getElementById('rec-price-people').value='2';
-  document.getElementById('price-avg-result').textContent='';
-}
-
 // ── SAVE ────────────────────────────────────────
 // ── PHOTO UPLOAD ───────────────────────────────
 var recPhoto=document.getElementById('rec-photo'),photoPreview=document.getElementById('photo-preview'),photoImg=document.getElementById('photo-img');
@@ -1419,7 +1384,6 @@ document.getElementById('btn-save').onclick=function(){
   var noteObj={id:'n'+Date.now(),cat:cat,name:name,score:selectedScore,tags:userTags.slice(),note:document.getElementById('rec-notes').value.trim(),time:new Date().toISOString().split('T')[0],location:loc||'',duration_min:duration||null,photo:uploadedPhotoData||''};
   notes.push(noteObj);
   document.getElementById('rec-name').value='';document.getElementById('rec-notes').value='';document.getElementById('rec-location').value='';if(durEl)durEl.value='';selectedScore=0;userTags=[];uploadedPhotoData=null;
-  resetPriceFields();
   photoPreview.style.display='none';recPhoto.value='';
   scoreRow.querySelectorAll('.score-btn').forEach(function(s){s.classList.remove('sel');});scoreRow.querySelector('[data-zero]')||scoreRow.querySelectorAll('.score-btn')[5]&&scoreRow.querySelectorAll('.score-btn')[5].classList.add('sel');tagsRow.querySelectorAll('.tag').forEach(function(t){t.remove();});
   saveUserData();sendToEverOS(notes[notes.length-1]);refreshGraph();document.querySelector('[data-view="universe-view"]').click();
@@ -1478,14 +1442,14 @@ document.getElementById('btn-save').onclick=function(){
         btn.onclick=function(){
           var targetNote=notes.filter(function(n){return n.id===btn.dataset.mergeId;})[0];
           if(!targetNote)return;
-          // Switch to universe view, open detail panel with re-tasting form
+          // Switch to universe view, open detail panel with follow-up form
           dupHint.classList.remove('show');
           recName.value='';
           document.querySelector('[data-view="universe-view"]').click();
           showDetail(targetNote);
-          // Auto-open the retaste form
+          // Auto-open the follow-up form
           setTimeout(function(){
-            var rtBtn=document.getElementById('btn-retaste');
+            var rtBtn=document.getElementById('btn-followup');
             if(rtBtn){rtBtn.click();}
           },300);
         };
@@ -1506,8 +1470,8 @@ var EverOS=(function(){
     if(EVEROS_MODE==='cloud'&&EVEROS_API_KEY)h['Authorization']='Bearer '+EVEROS_API_KEY;
     return h;
   };
-  var _groupId=function(){return 'tasteverse_'+USER_ID;};
-  var _groupName='TasteVerse';
+  var _groupId=function(){return 'energymap_'+USER_ID;};
+  var _groupName='EnergyMap';
   var _online=true;
 
   function formatMemoryContent(note){
@@ -1539,7 +1503,7 @@ var EverOS=(function(){
     var ts=note.time?new Date(note.time+'T12:00:00').getTime():Date.now();
     var payload={
       user_id:USER_ID,
-      session_id:note.id||('tv_'+ts),   // one session per note, enables precise delete later
+      session_id:note.id||('em_'+ts),   // one session per note, enables precise delete later
       async_mode:true,
       messages:[{
         role:'user',
@@ -1910,13 +1874,12 @@ function _extractTokens(text){
 function _extractNoteKeywords(noteText){
   if(!noteText)return [];
   var kw=[];
-  var flavorWords=['energizing','draining','calm','anxious','stressed','relaxed','happy',
+  var emotionWords=['energizing','draining','calm','anxious','stressed','relaxed','happy',
     'sad','inspired','tired','excited','motivated','drained','charged','peaceful',
     'nervous','uplifted','productive','focused','distracted','supported','understood',
-    'fruity','smoky','nutty','floral','citrus','sweet','bitter','sour','spicy','creamy',
-    'rich','light','smooth','bold','mild','balanced'];
+    'warm','awkward','bored','fulfilled','low','joyful','healing','depleting','comfortable'];
   var text=noteText.toLowerCase();
-  flavorWords.forEach(function(fw){if(text.indexOf(fw)>=0)kw.push(fw);});
+  emotionWords.forEach(function(w){if(text.indexOf(w)>=0)kw.push(w);});
   var tokens=_extractTokens(noteText);
   var stop=['the','and','but','this','that','very','really','also','just','with','from',
     'have','was','had','did','for','not','are','been','were','would','could','should',
@@ -2194,7 +2157,7 @@ function initGraph(){
             return 0.3;
           });
         }
-      }catch(e){console.warn('[TasteVerse] Force cfg:',e);}
+      }catch(e){console.warn('[EnergyMap] Force cfg:',e);}
     },100);
 
     // ═══════════════════════════════════════════
@@ -2995,14 +2958,6 @@ function showDetail(note){
   var cat=CATEGORIES[note.cat]||{name:note.cat,icon:'📝',color:'#888'};
   var rel=notes.filter(function(n){return n.id!==note.id&&(n.cat===note.cat||n.tags.some(function(t){return note.tags.indexOf(t)>=0;}));}).slice(0,4);
   var locHtml=note.location?'<div style="font-size:11px;color:var(--accent2);margin-top:8px">📍 '+note.location+'</div>':'';
-  var priceHtml='';
-  if(note.price){
-    if(note.price.type==='avg'){
-      priceHtml='<div style="font-size:12px;color:var(--accent);margin-top:8px">💰 ¥'+note.price.price+' <span style="opacity:0.5;font-size:10px">per person (total ¥'+note.price.total+' ÷ '+note.price.people+')</span></div>';
-    }else{
-      priceHtml='<div style="font-size:12px;color:var(--accent);margin-top:8px">💰 ¥'+note.price.price+'</div>';
-    }
-  }
   var photoHtml=note.photo?'<div style="margin-top:12px;border-radius:8px;overflow:hidden"><img src="'+note.photo+'" style="max-width:100%;border-radius:8px"></div>':'';
 
   // Visit history
@@ -3011,12 +2966,12 @@ function showDetail(note){
   var visitsHtml='';
   if(visits.length>0){
     visitsHtml='<div class="dp-visits"><h4>Interaction History ×'+visitCount+'</h4>';
-    // Show original tasting first
+    // Show original interaction first
     visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(note.score)+'">'+(note.score>0?'+':'')+note.score+'</span><span style="opacity:0.4;font-size:10px"> energy · 1st · '+note.time+'</span></div>';
     if(note.tags.length)visitsHtml+='<div class="vi-tags">'+note.tags.map(function(t){return '<span class="vi-tag">'+t+'</span>';}).join('')+'</div>';
     if(note.note)visitsHtml+='<div style="margin-top:4px;font-size:11px;color:var(--text3)">'+note.note.substring(0,80)+(note.note.length>80?'...':'')+'</div>';
     visitsHtml+='</div>';
-    // Show each re-tasting
+    // Show each follow-up
     visits.forEach(function(v,i){
       visitsHtml+='<div class="dp-visit-item"><div><span class="vi-score" style="color:'+energyColor(v.score)+'">'+(v.score>0?'+':'')+v.score+'</span><span style="opacity:0.4;font-size:10px"> energy · #'+(i+2)+' · '+v.time+'</span></div>';
       if(v.tags&&v.tags.length)visitsHtml+='<div class="vi-tags">'+v.tags.map(function(t){return '<span class="vi-tag">'+t+'</span>';}).join('')+'</div>';
@@ -3040,16 +2995,11 @@ function showDetail(note){
     +locHtml+photoHtml
     +'<div class="dp-time">📅 '+note.time+(note.duration_min?' · ⏱ '+note.duration_min+' min':'')+'</div>'
     +visitsHtml
-    +'<button class="btn-retaste" id="btn-retaste">＋ Log Follow-up</button>'
-    +'<div class="retaste-form" id="retaste-form">'
+    +'<button class="btn-followup" id="btn-followup">＋ Log Follow-up</button>'
+    +'<div class="followup-form" id="followup-form">'
       +'<label>Energy Score (-5~+5)</label><div class="rt-score-row" id="rt-score-row"></div>'
       +'<label>Emotion Tags</label><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px" id="rt-tags-row"><input type="text" id="rt-tag-input" placeholder="Press Enter to add tags" style="flex:1;min-width:100px;padding:5px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;outline:none;font-family:inherit"></div>'
       +'<label>Activity &amp; Feelings</label><textarea id="rt-notes" placeholder="How did it feel this time..."></textarea>'
-      +'<label>Price <span style="opacity:0.4;font-weight:400">(optional)</span></label>'
-      +'<div class="price-wrap"><div class="price-mode-toggle" id="rt-price-mode-toggle"><span class="price-mode sel" data-mode="unit">Unit</span><span class="price-mode" data-mode="avg">Per Person</span></div>'
-      +'<div class="price-inputs"><div id="rt-price-unit-group" style="display:flex;align-items:center;gap:6px"><input type="number" id="rt-price" placeholder="0.00" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"></div>'
-      +'<div id="rt-price-avg-group" style="display:none"><div style="display:flex;gap:8px;align-items:center"><input type="number" id="rt-price-total" placeholder="Total" min="0" step="0.01" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"><span style="color:var(--text3);font-size:12px">÷</span><input type="number" id="rt-price-people" placeholder="People" min="1" step="1" value="2" style="width:68px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:12px;font-family:inherit;outline:none"></div><div class="price-avg-result" id="rt-price-avg-result"></div></div>'
-      +'</div></div>'
       +'<label>Photo <span style="opacity:0.4;font-weight:400">(optional)</span></label>'
       +'<input type="file" id="rt-photo" accept="image/*" capture="environment" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:var(--surface3);color:var(--text);font-size:11px;font-family:inherit;outline:none;cursor:pointer">'
       +'<div id="rt-photo-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;max-height:160px"><img id="rt-photo-img" style="width:100%;display:block"></div>'
@@ -3082,8 +3032,8 @@ function showDetail(note){
   // Wire related items
   document.querySelectorAll('.dp-ri').forEach(function(el){el.onclick=function(){var n=notes.filter(function(x){return x.id===el.dataset.id;})[0];if(n)showDetail(n);};});
 
-  // Wire re-tasting button and form
-  var rtForm=document.getElementById('retaste-form');
+  // Wire follow-up button and form
+  var rtForm=document.getElementById('followup-form');
   var rtScoreRow=document.getElementById('rt-score-row');
   var rtScore=0;
   var rtTags=[];
@@ -3124,28 +3074,7 @@ function showDetail(note){
     }
   };
 
-  // Re-taste price mode toggle
-  var rtPriceMode='unit';
-  document.getElementById('rt-price-mode-toggle').onclick=function(e){
-    var t=e.target;
-    if(!t.dataset||!t.dataset.mode)return;
-    rtPriceMode=t.dataset.mode;
-    this.querySelectorAll('.price-mode').forEach(function(m){m.classList.toggle('sel',m.dataset.mode===rtPriceMode);});
-    document.getElementById('rt-price-unit-group').style.display=rtPriceMode==='unit'?'flex':'none';
-    document.getElementById('rt-price-avg-group').style.display=rtPriceMode==='avg'?'block':'none';
-    document.getElementById('rt-price-avg-result').textContent='';
-  };
-  function calcRtAvgPrice(){
-    var total=parseFloat(document.getElementById('rt-price-total').value)||0;
-    var people=parseInt(document.getElementById('rt-price-people').value)||1;
-    var result=document.getElementById('rt-price-avg-result');
-    if(total>0&&people>0){result.textContent='≈ ¥'+(total/people).toFixed(2)+' per person';}
-    else{result.textContent='';}
-  }
-  document.getElementById('rt-price-total').oninput=calcRtAvgPrice;
-  document.getElementById('rt-price-people').oninput=calcRtAvgPrice;
-
-  // Re-taste photo upload
+  // Follow-up photo upload
   var rtUploadedPhotoData=null;
   var rtPhotoEl=document.getElementById('rt-photo');
   var rtPhotoPreview=document.getElementById('rt-photo-preview');
@@ -3162,7 +3091,7 @@ function showDetail(note){
     reader.readAsDataURL(file);
   };
 
-  document.getElementById('btn-retaste').onclick=function(){
+  document.getElementById('btn-followup').onclick=function(){
     rtForm.classList.toggle('open');
   };
   document.getElementById('rt-cancel').onclick=function(){
@@ -3171,22 +3100,12 @@ function showDetail(note){
   document.getElementById('rt-save').onclick=function(){
     if(rtScore===undefined||rtScore===null){alert('Please select an energy score');return;}
     if(!note.visits)note.visits=[];
-    var rtPriceData=null;
-    if(rtPriceMode==='unit'){
-      var rtPriceVal=parseFloat(document.getElementById('rt-price').value);
-      if(rtPriceVal>0)rtPriceData={type:'unit',price:rtPriceVal};
-    }else{
-      var rtTotal=parseFloat(document.getElementById('rt-price-total').value)||0;
-      var rtPeople=parseInt(document.getElementById('rt-price-people').value)||1;
-      if(rtTotal>0)rtPriceData={type:'avg',total:rtTotal,people:rtPeople,price:+(rtTotal/rtPeople).toFixed(2)};
-    }
     var visitObj={
       score:rtScore,
       tags:rtTags.slice(),
       note:document.getElementById('rt-notes').value.trim(),
       time:new Date().toISOString().split('T')[0]
     };
-    if(rtPriceData)visitObj.price=rtPriceData;
     if(rtUploadedPhotoData)visitObj.photo=rtUploadedPhotoData;
     note.visits.push(visitObj);
     saveUserData();
@@ -3206,10 +3125,10 @@ function startApp(){
   populateCatSelects();
   initGraph();
   renderCategories();
-  // Expose data for V29 sommelier engine to consume when embedded
-  window.__tvNotes=notes;
-  window.__tvCategories=CATEGORIES;
-  // Expose save APIs for AI sommelier chat to write back records
+  // Expose data for embedded AI advisor
+  window.__emNotes=notes;
+  window.__emCategories=CATEGORIES;
+  // Expose save APIs for AI advisor chat to write back records
   // Helper: clamp + round score to our app's format (integer 0-10)
   function _normalizeScore(v){
     var n=Number(v);
@@ -3218,10 +3137,10 @@ function startApp(){
     if(n>10)n=n/10;
     return Math.max(0,Math.min(10,Math.round(n)));
   }
-  // Expose USER_ID so AI sommelier can pass it to /api/ai/parse for EverOS lookup
-  window.__tvUserId=USER_ID;
+  // Expose USER_ID so AI advisor can pass it to /api/ai/parse for EverOS lookup
+  window.__emUserId=USER_ID;
   // Create a new category dynamically (used by AI flow when AI suggests a new cat)
-  window.__tvCreateCategory=function(catData){
+  window.__emCreateCategory=function(catData){
     if(!catData||!catData.name)return null;
     // Sanitize key: prefer AI-provided key, fall back to timestamp-based
     var key=(catData.key||'').toString().toLowerCase().replace(/[^a-z0-9_]/g,'_').replace(/^_+|_+$/g,'');
@@ -3243,11 +3162,11 @@ function startApp(){
     saveUserData();
     populateCatSelects();
     renderCategories();
-    window.__tvCategories=CATEGORIES;
-    console.log('[TasteVerse] Created new category:',key,'→',catData.name);
+    window.__emCategories=CATEGORIES;
+    console.log('[EnergyMap] Created new category:',key,'→',catData.name);
     return key;
   };
-  window.__tvAddNote=function(data){
+  window.__emAddNote=function(data){
     // data: {name, cat, score, tags, note, location, price, photo}
     // Validate cat: must be a key in CATEGORIES, otherwise fall back
     var catKey=data.cat;
@@ -3255,7 +3174,7 @@ function startApp(){
       // Try matching by Chinese name (in case AI returned name instead of key)
       var matchByName=Object.keys(CATEGORIES).find(function(k){return CATEGORIES[k].name===data.cat;});
       catKey=matchByName||Object.keys(CATEGORIES)[0];
-      console.warn('[TasteVerse] AI returned unknown cat "'+data.cat+'", using "'+catKey+'"');
+      console.warn('[EnergyMap] AI returned unknown cat "'+data.cat+'", using "'+catKey+'"');
     }
     var noteObj={
       id:'n'+Date.now(),
@@ -3267,16 +3186,15 @@ function startApp(){
       time:new Date().toISOString().split('T')[0],
       location:data.location||''
     };
-    if(data.price&&Number(data.price)>0)noteObj.price={type:'unit',price:Number(data.price)};
     if(data.photo)noteObj.photo=data.photo;
     notes.push(noteObj);
     saveUserData();
     if(typeof EverOS!=='undefined'&&EverOS.update)EverOS.update(noteObj);
     refreshGraph();
-    window.__tvNotes=notes;
+    window.__emNotes=notes;
     return noteObj;
   };
-  window.__tvAddVisit=function(noteId,visitData){
+  window.__emAddVisit=function(noteId,visitData){
     var target=notes.find(function(n){return n.id===noteId;});
     if(!target)return null;
     if(!target.visits)target.visits=[];
@@ -3286,7 +3204,6 @@ function startApp(){
       note:visitData.note||'',
       time:new Date().toISOString().split('T')[0]
     };
-    if(visitData.price&&Number(visitData.price)>0)visit.price={type:'unit',price:Number(visitData.price)};
     if(visitData.photo)visit.photo=visitData.photo;
     target.visits.push(visit);
     saveUserData();
@@ -3314,7 +3231,7 @@ window.onresize=function(){if(Graph)Graph.width(window.innerWidth).height(window
 (function(){
   // Try to restore a previously authenticated session for this browser.
   var saved=null;
-  try{var raw=localStorage.getItem('tv_session')||localStorage.getItem('em_session');if(raw)saved=JSON.parse(raw);}catch(e){}
+  try{var raw=localStorage.getItem('em_session')||localStorage.getItem('tv_session');if(raw){saved=JSON.parse(raw);if(!localStorage.getItem('em_session'))localStorage.setItem('em_session',raw);}}catch(e){}
 
   if(saved&&saved.email){
     // Resume existing session: skip login, load that user's data.
@@ -3328,120 +3245,6 @@ window.onresize=function(){if(Graph)Graph.width(window.innerWidth).height(window
   }
 })();
 
-// ── Demo seed block (disabled) ────────────────────────────────────────────────
-/* (function(){
-  currentUser={email:'demo@energymap.app'};
-  TAXONOMY=deepClone(DEFAULT_TAXONOMY);
-  TAXONOMY.drinks.children.push('cocktail','whisky','sake');
-  TAXONOMY.food.children.push('japanese','italian','bbq','hotpot');
-  TAXONOMY.other.children.push('snack');
-  CATEGORIES=deepClone(DEFAULT_CATEGORIES);
-  CATEGORIES.cocktail={name:'鸡尾酒',icon:'🍸',color:'#E06890',parent:'drinks'};
-  CATEGORIES.whisky={name:'威士忌',icon:'🥃',color:'#D49040',parent:'drinks'};
-  CATEGORIES.sake={name:'清酒',icon:'🍶',color:'#88B8D8',parent:'drinks'};
-  CATEGORIES.japanese={name:'日料',icon:'🍣',color:'#F0A070',parent:'food'};
-  CATEGORIES.italian={name:'意餐',icon:'🍝',color:'#D8786C',parent:'food'};
-  CATEGORIES.bbq={name:'烧烤',icon:'🔥',color:'#E87830',parent:'food'};
-  CATEGORIES.hotpot={name:'火锅',icon:'🫕',color:'#D85040',parent:'food'};
-  CATEGORIES.snack={name:'小食',icon:'🥨',color:'#C8A860',parent:'other'};
-
-  // ── AI-generated tasting notes (spanning 2025-12 to 2026-04) ──
-  var _id=1;
-  function mid(){return 'demo_'+(_id++);}
-  notes=[
-    // 2025-12
-    {id:mid(),name:'M2M 哥伦比亚 薇拉',cat:'coffee',score:8,time:'2025-12-03',note:'水洗处理，入口有明亮的柑橘酸质，中段转为红糖甜感，尾韵带坚果香。',tags:['柑橘','水洗','精品'],price:{type:'unit',price:38}},
-    {id:mid(),name:'Seesaw 冬季特调',cat:'coffee',score:7,time:'2025-12-05',note:'拼配豆，苦巧克力基底搭配橙皮调，奶咖表现佳，层次不错。',tags:['拼配','巧克力','橙皮'],price:{type:'unit',price:42}},
-    {id:mid(),name:'龙井明前头采',cat:'tea',score:9,time:'2025-12-08',note:'豆香明显，汤色清澈，第三泡最佳，甘甜悠长。',tags:['龙井','明前','甘甜'],price:{type:'unit',price:120}},
-    {id:mid(),name:'奔富 Bin 389 (2019)',cat:'wine',score:8,time:'2025-12-10',note:'黑醋栗、黑莓为主，橡木桶带来香草和烟熏感，单宁已经柔化，收尾较长。',tags:['赤霞珠','西拉','澳洲'],price:{type:'unit',price:380}},
-    {id:mid(),name:'鹿儿岛黑猪涮涮锅',cat:'japanese',score:9,time:'2025-12-12',note:'黑猪肉质细腻，脂肪分布均匀，昆布汤底鲜美，配柚子醋酱完美。',tags:['黑猪','涮锅','鲜美'],price:{type:'avg',price:268}},
-    {id:mid(),name:'蜀大侠牛油火锅',cat:'hotpot',score:8,time:'2025-12-15',note:'锅底醇厚，牛油香浓。毛肚七上八下口感脆嫩，鸭肠也非常新鲜。',tags:['牛油','毛肚','麻辣'],price:{type:'avg',price:135}},
-    {id:mid(),name:'Lady M 千层蛋糕',cat:'dessert',score:7,time:'2025-12-18',note:'抹茶千层，层次分明但偏甜，奶油稍腻，茶味不够突出。',tags:['千层','抹茶','偏甜'],price:{type:'unit',price:78}},
-    {id:mid(),name:'Negroni 经典款',cat:'cocktail',score:8,time:'2025-12-20',note:'金酒、甜味美思、金巴利 1:1:1，苦甜平衡好，橙皮油喷洒的香气点睛。',tags:['金酒','苦甜','经典'],price:{type:'unit',price:88}},
-    {id:mid(),name:'全聚德烤鸭',cat:'chinese',score:7,time:'2025-12-22',note:'皮酥脆但鸭肉偏干，蘸白糖吃意外不错。配套的鸭架汤鲜美。',tags:['烤鸭','北京','酥脆'],price:{type:'avg',price:188}},
-    {id:mid(),name:'山崎 12年',cat:'whisky',score:9,time:'2025-12-25',note:'蜂蜜、白桃、淡淡的雪莉桶甜香。入口丝滑，余韵带檀木和肉桂。',tags:['单一麦芽','日威','丝滑'],price:{type:'unit',price:120}},
-
-    // 2026-01
-    {id:mid(),name:'% Arabica 手冲肯尼亚',cat:'coffee',score:9,time:'2026-01-03',note:'黑莓果酱般的甜酸，中段有番茄汤的鲜感，非常干净的杯测体验。',tags:['肯尼亚','黑莓','干净'],price:{type:'unit',price:58}},
-    {id:mid(),name:'凤凰单枞 鸭屎香',cat:'tea',score:8,time:'2026-01-06',note:'银花香气扑鼻，入口有奶甜感，回甘强烈，耐泡度高。',tags:['单枞','花香','回甘'],price:{type:'unit',price:85}},
-    {id:mid(),name:'Il Pomodoro 那不勒斯披萨',cat:'italian',score:8,time:'2026-01-08',note:'薄底酥脆，San Marzano 番茄酱汁酸甜适中，水牛芝士拉丝绵长。',tags:['披萨','芝士','酸甜'],price:{type:'avg',price:98}},
-    {id:mid(),name:'Espresso Martini',cat:'cocktail',score:9,time:'2026-01-10',note:'浓缩咖啡、伏特加、咖啡利口酒。丝绒泡沫层完美，苦中带甜，提神。',tags:['咖啡','伏特加','丝绒'],price:{type:'unit',price:98}},
-    {id:mid(),name:'谭鸭血老火锅',cat:'hotpot',score:7,time:'2026-01-12',note:'鸭血嫩滑入味，但锅底偏油，花椒的麻度盖过了香料的层次。',tags:['鸭血','麻辣','偏油'],price:{type:'avg',price:115}},
-    {id:mid(),name:'小山园抹茶大福',cat:'dessert',score:8,time:'2026-01-15',note:'外皮软糯，抹茶馅苦甜恰到好处，红豆颗粒感增加了口感层次。',tags:['大福','抹茶','软糯'],price:{type:'unit',price:28}},
-    {id:mid(),name:'木屋烧烤 羊肉串',cat:'bbq',score:7,time:'2026-01-18',note:'炭火香气足，孜然撒得均匀，但肉块偏小，羊膻味不太够。',tags:['羊肉','孜然','炭火'],price:{type:'avg',price:78}},
-    {id:mid(),name:'獭祭 二割三分',cat:'sake',score:9,time:'2026-01-20',note:'精米步合23%，极其纯净的吟酿香，蜜瓜和白花香气交织，入口如丝。',tags:['纯米大吟酿','蜜瓜','纯净'],price:{type:'unit',price:280}},
-    {id:mid(),name:'勃艮第 村级夏布利',cat:'wine',score:7,time:'2026-01-22',note:'矿物感突出，青苹果和柠檬的酸度明快，余韵偏短但适合配生蚝。',tags:['霞多丽','勃艮第','矿物'],price:{type:'unit',price:220}},
-    {id:mid(),name:'松鹤楼 松鼠桂鱼',cat:'chinese',score:8,time:'2026-01-25',note:'外酥里嫩，糖醋汁酸甜比例完美，鱼肉鲜嫩不柴，摆盘精致。',tags:['苏帮菜','糖醋','酥脆'],price:{type:'avg',price:168}},
-
-    // 2026-02
-    {id:mid(),name:'Peet\'s 危地马拉 安提瓜',cat:'coffee',score:7,time:'2026-02-02',note:'可可和坚果的沉稳风味，body 厚重，适合加奶做拿铁。',tags:['危地马拉','可可','厚重'],price:{type:'unit',price:45}},
-    {id:mid(),name:'桐木关正山小种',cat:'tea',score:8,time:'2026-02-05',note:'松烟香怡人不呛，汤色红亮，桂圆甜感持久，适合冬天品饮。',tags:['红茶','松烟','桂圆'],price:{type:'unit',price:95}},
-    {id:mid(),name:'EATALY 手工意面',cat:'italian',score:9,time:'2026-02-08',note:'新鲜鸡蛋面搭配松露黄油酱，面条弹牙，松露香气浓郁但不做作。',tags:['手工面','松露','弹牙'],price:{type:'avg',price:158}},
-    {id:mid(),name:'久保田 千寿',cat:'sake',score:7,time:'2026-02-10',note:'清爽型吟酿酒，淡丽辛口，搭配刺身很合适，单饮略显单薄。',tags:['吟酿','辛口','清爽'],price:{type:'unit',price:85}},
-    {id:mid(),name:'炭火烤鳗鱼',cat:'japanese',score:8,time:'2026-02-12',note:'白烧先上，品尝鳗鱼本味；蒲烧酱汁焦香浓厚，配饭一绝。',tags:['鳗鱼','炭烤','焦香'],price:{type:'avg',price:198}},
-    {id:mid(),name:'Old Fashioned',cat:'cocktail',score:8,time:'2026-02-14',note:'波本威士忌为基，安古天娜苦精和方糖，橙皮油脂香完美收尾。',tags:['波本','经典','橙皮'],price:{type:'unit',price:78}},
-    {id:mid(),name:'海底捞番茄锅底',cat:'hotpot',score:8,time:'2026-02-17',note:'番茄汤底酸甜浓郁，涮虾滑和嫩牛肉最佳，服务一如既往地好。',tags:['番茄','虾滑','服务好'],price:{type:'avg',price:125}},
-    {id:mid(),name:'提拉米苏',cat:'dessert',score:9,time:'2026-02-19',note:'马斯卡彭奶酪绵密，手指饼浸泡浓缩咖啡和朗姆酒，层次丰富不甜腻。',tags:['意式','咖啡','绵密'],price:{type:'unit',price:58}},
-    {id:mid(),name:'白州 蒸馏所限定',cat:'whisky',score:8,time:'2026-02-22',note:'青苹果、薄荷、淡淡泥煤烟熏。清新的森林系风格，冰球饮最佳。',tags:['白州','日威','清新'],price:{type:'unit',price:150}},
-    {id:mid(),name:'卤煮火烧',cat:'chinese',score:7,time:'2026-02-25',note:'卤汤浓郁咸香，火烧吸满汤汁，肺头软嫩。豆腐泡是灵魂配角。',tags:['北京小吃','卤味','咸香'],price:{type:'unit',price:32}},
-
-    // 2026-03
-    {id:mid(),name:'Blue Bottle 耶加雪菲',cat:'coffee',score:9,time:'2026-03-01',note:'花香四溢，佛手柑和茉莉的清雅，尾韵有白桃甜感，极致干净。',tags:['耶加雪菲','花香','干净'],price:{type:'unit',price:62}},
-    {id:mid(),name:'白毫银针 2025',cat:'tea',score:9,time:'2026-03-04',note:'毫香馥郁，汤色杏黄，入口清甜如泉，三泡后转为淡雅的稻香。',tags:['白茶','银针','清甜'],price:{type:'unit',price:180}},
-    {id:mid(),name:'OMAKASE 春季限定',cat:'japanese',score:9,time:'2026-03-07',note:'樱鲷寿司鲜甜细腻，海胆军舰浓郁如奶油，最后的玉子烧完美收尾。',tags:['omakase','樱鲷','海胆'],price:{type:'avg',price:580}},
-    {id:mid(),name:'Barolo DOCG 2018',cat:'wine',score:9,time:'2026-03-09',note:'玫瑰花瓣、焦油、樱桃和烟草交织。单宁如天鹅绒，余韵长达一分钟。',tags:['内比奥罗','意大利','天鹅绒'],price:{type:'unit',price:520}},
-    {id:mid(),name:'黑珍珠烤肉',cat:'bbq',score:8,time:'2026-03-12',note:'澳洲和牛M7雪花均匀，轻烤五分熟，入口即化，蘸海盐最佳。',tags:['和牛','雪花','入口即化'],price:{type:'avg',price:298}},
-    {id:mid(),name:'巴斯克芝士蛋糕',cat:'dessert',score:8,time:'2026-03-14',note:'外焦里嫩，焦糖化表面增加了苦甜层次，内芯如慕斯般丝滑。',tags:['巴斯克','芝士','焦糖'],price:{type:'unit',price:48}},
-    {id:mid(),name:'Whisky Sour',cat:'cocktail',score:7,time:'2026-03-16',note:'波本、柠檬汁、蛋白。酸甜平衡不错但蛋白泡沫不够绵密。',tags:['波本','酸甜','蛋白'],price:{type:'unit',price:72}},
-    {id:mid(),name:'小龙坎火锅',cat:'hotpot',score:8,time:'2026-03-18',note:'牛油底麻辣适中，手切鲜毛肚秒杀，黄喉脆嫩，小酥肉惊艳。',tags:['牛油','毛肚','小酥肉'],price:{type:'avg',price:128}},
-    {id:mid(),name:'響 和风调和',cat:'whisky',score:8,time:'2026-03-21',note:'蜂蜜、白兰地般的甜润，中段有淡雅的花香，收尾温和不辣口。',tags:['调和','日威','甜润'],price:{type:'unit',price:95}},
-    {id:mid(),name:'Din Tai Fung 小笼包',cat:'chinese',score:9,time:'2026-03-24',note:'18个褶子标准工艺，汤汁丰腴鲜美，皮薄但不破，蘸醋配姜丝绝了。',tags:['小笼包','鼎泰丰','鲜美'],price:{type:'avg',price:88}},
-    {id:mid(),name:'盐烤虹鳟鱼',cat:'japanese',score:7,time:'2026-03-27',note:'鱼肉鲜嫩但盐度偏高，皮烤得不够脆。配柠檬挤汁后改善不少。',tags:['烤鱼','盐烤','偏咸'],price:{type:'avg',price:68}},
-    {id:mid(),name:'冻顶乌龙',cat:'tea',score:8,time:'2026-03-30',note:'焙火恰到好处，果香和焦糖融合，汤水醇厚，越泡越甜。',tags:['乌龙','焙火','醇厚'],price:{type:'unit',price:75}},
-
-    // 2026-04
-    {id:mid(),name:'三顿半 超即溶 #3',cat:'coffee',score:6,time:'2026-04-01',note:'方便是真方便，但风味扁平，只有基础的坚果和可可味道。',tags:['即溶','方便','扁平'],price:{type:'unit',price:8}},
-    {id:mid(),name:'Pierre Hermé 玫瑰荔枝',cat:'dessert',score:9,time:'2026-04-02',note:'Ispahan 马卡龙，荔枝清甜搭配玫瑰花瓣和覆盆子，层次精妙绝伦。',tags:['马卡龙','荔枝','玫瑰'],price:{type:'unit',price:42}},
-    {id:mid(),name:'日式炭火烧鸟',cat:'japanese',score:8,time:'2026-04-04',note:'鸡皮烤到微焦，油脂香四溢；鸡心弹牙多汁。清酒配焼鸟是黄金搭档。',tags:['烧鸟','炭火','多汁'],price:{type:'avg',price:158}},
-    {id:mid(),name:'Margherita 手工比萨',cat:'italian',score:7,time:'2026-04-05',note:'经典三色配置，但面团发酵不够充分，底部略硬，芝士品质不错。',tags:['比萨','经典','面团'],price:{type:'avg',price:68}},
-    {id:mid(),name:'白桃乌龙冷泡',cat:'tea',score:7,time:'2026-04-06',note:'冷泡一夜的白桃乌龙，清甜解渴，桃味自然不做作，适合春天。',tags:['冷泡','白桃','清甜'],price:{type:'unit',price:25}},
-    {id:mid(),name:'Mai Tai 热带风情',cat:'cocktail',score:8,time:'2026-04-07',note:'朗姆酒基底，杏仁糖浆、库拉索、青柠。热带水果的炸裂感配薄荷叶清爽。',tags:['朗姆','热带','青柠'],price:{type:'unit',price:92}},
-    {id:mid(),name:'新疆烤馕配羊肉串',cat:'bbq',score:9,time:'2026-04-08',note:'馕坑现烤，外脆内软带芝麻香。大串羊肉肥瘦相间，孜然辣椒面地道。',tags:['新疆','烤馕','地道'],price:{type:'avg',price:52}},
-    {id:mid(),name:'安溪铁观音 春茶',cat:'tea',score:8,time:'2026-04-09',note:'兰花香显，汤色金黄透亮，喉韵深远，七泡有余香。春茶就是不一样。',tags:['铁观音','兰花','春茶'],price:{type:'unit',price:110}},
-    {id:mid(),name:'Onibus 埃塞俄比亚日晒',cat:'coffee',score:8,time:'2026-04-10',note:'蓝莓、发酵果实的浓郁甜感，body偏薄但风味层次丰富，冷了更好喝。',tags:['日晒','蓝莓','发酵'],price:{type:'unit',price:55}},
-    {id:mid(),name:'余市 NAS',cat:'whisky',score:8,time:'2026-04-10',note:'泥煤烟熏和海盐矿物感，像北海道冬天的篝火。搭配黑巧克力绝佳。',tags:['泥煤','余市','烟熏'],price:{type:'unit',price:110}}
-  ];
-
-  // Ensure all notes have tags array and visits array
-  notes.forEach(function(n){
-    if(!n.tags)n.tags=[];
-    if(!n.visits)n.visits=[];
-  });
-
-  // Set demo user badge
-  document.getElementById('user-email-display').textContent='Demo 模式';
-  document.getElementById('user-avatar').textContent='D';
-
-  // Start app directly (with EverOS connection check)
-  populateCatSelects();
-  initGraph();
-  renderCategories();
-  // Re-expose data for V29 sommelier engine (demo seed added notes + categories after startApp)
-  window.__tvNotes=notes;
-  window.__tvCategories=CATEGORIES;
-  // Check EverOS connection and update status indicator
-  EverOS.checkConnection(function(online){
-    var dot=document.getElementById('everos-dot');
-    var label=document.getElementById('everos-label');
-    if(online){
-      dot.style.background='#5ebe8e';label.textContent='EverOS ✓';
-      label.parentElement.title='EverOS memory connected ('+EVEROS_API+')';
-    }else{
-      dot.style.background='#e85050';label.textContent='EverOS ✗';
-      label.parentElement.title='EverOS offline — local mode only';
-    }
-  });
-})(); */
 
 })();
 }

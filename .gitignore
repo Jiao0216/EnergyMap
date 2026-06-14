@@ -25,6 +25,9 @@ vite.config.*.timestamp-*
 .env.development.local
 .env.production.local
 
+# Local deploy scratch
+tmp-mcp-push/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
